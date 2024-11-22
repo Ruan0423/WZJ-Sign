@@ -3,7 +3,9 @@ app:
   version: "1.0.1"
   port: 8080
   model: "dev"
-
 position:
-  lat : "30.520517"
-	lon : "114.423792"
+  lat: "30.520517"
+  lon: "114.423792"
+
+
+

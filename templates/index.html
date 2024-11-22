@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WZJ Sign</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        #dataContainer {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+            background-color: #f9f9f9;
+        }
+        .data-item {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <h1>WZJ Sign</h1>
+    <form id="openidForm">
+        <label for="openid">OpenID:</label>
+        <input type="text" id="openid" name="openid" required>
+        <button type="submit">提交</button>
+    </form>
+    <div id="dataContainer"></div>
+
+    <script>
+        document.getElementById('openidForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const openid = document.getElementById('openid').value.trim();
+            if (!openid) {
+                alert('请输入有效的 OpenID');
+                return;
+            }
+
+            try {
+                // 发送 POST 请求获取 WebSocket URL
+                const response = await fetch('/wzjsign', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ openid }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('提交失败，请检查服务器日志。');
+                }
+
+                const { wsUrl } = await response.json();
+
+                // 建立 WebSocket 连接
+                const ws = new WebSocket(wsUrl);
+                window.ws = ws;
+
+                ws.onopen = function() {
+                    console.log('WebSocket 连接已打开');
+                    const dataContainer = document.getElementById('dataContainer');
+                    dataContainer.innerHTML = ''; // 清空之前的数据
+                    const info = document.createElement('div');
+                    info.textContent = '连接已建立，开始接收数据...获取个人信息中....';
+                    dataContainer.appendChild(info);
+                };
+
+                ws.onmessage = function(event) {
+                    const dataContainer = document.getElementById('dataContainer');
+                    const newData = document.createElement('div');
+                    newData.className = 'data-item';
+                    newData.textContent = event.data;
+                    dataContainer.appendChild(newData);
+                    dataContainer.scrollTop = dataContainer.scrollHeight; // 滚动到底部
+                };
+
+                ws.onclose = function() {
+                    console.log('WebSocket 连接已关闭');
+                    const dataContainer = document.getElementById('dataContainer');
+                    const info = document.createElement('div');
+                    info.textContent = '连接已关闭';
+                    dataContainer.appendChild(info);
+                };
+
+                ws.onerror = function(error) {
+                    console.error('WebSocket 错误:', error);
+                    alert('WebSocket 连接发生错误，请检查控制台日志。');
+                };
+
+            } catch (err) {
+                console.error(err);
+                alert('提交失败，请稍后重试。');
+            }
+        });
+    </script>
+</body>
+</html>

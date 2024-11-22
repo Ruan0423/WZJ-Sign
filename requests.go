@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 )
 
 var BaseHeader = map[string][]string{
@@ -18,7 +19,7 @@ var BaseHeader = map[string][]string{
 
 var (
 	OpenidURL = "https://v18.teachermate.cn/wechat-pro-ssr/?openid=1afa187e0cb54ddb7c7db49ad859f97f&from=wzj"
-	Openid    = "e32b7d07fc718217b1ccf724b0083df2"
+	Openid    = "87effcd8fd92ff836edd956efa648118"
 	lat = "30.520517"
 	lon = "114.423792"
 )
@@ -48,11 +49,12 @@ func RequestStudentRole(openid string) (status string, Resdata string) {
 	req.Header.Add("referrer", APIReferrer)
 
 	//创建http客户端
-	cilent := &http.Client{}
+	cilent := &http.Client{Timeout: 10 * time.Second,}
 
 	res, err := cilent.Do(req)
 	if err != nil {
 		fmt.Println("qignqiuerr:", err)
+		return
 	}
 	defer res.Body.Close()
 	data, _ := ioutil.ReadAll(res.Body)
@@ -76,7 +78,7 @@ func RequestStudentinfo(openid string) (status string, data string) {
 	req.Header.Add("Openid", openid)
 	req.Header.Add("referrer", APIReferrer)
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second,}
 	res, err := client.Do(req)
 	if err != nil {
 		log.Println("client Do err :", err)
@@ -103,7 +105,7 @@ func RequestActiveSign(openid string) (status string, data string) {
 	req.Header.Add("referrer", APIReferrer)
 	req.Header.Add("If-None-Match", "38-djBNGTNDrEJXNs9DekumVQ")
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second,}
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -147,6 +149,7 @@ func RequestSign(openid string ,courseid int, signid int)(status string,data str
 	req.Header.Add("referrer", APIReferrer)
 
 	client := &http.Client{
+		Timeout: 10 * time.Second,
 
 	}
 	res ,err := client.Do(req)
