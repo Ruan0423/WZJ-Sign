@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,9 +16,11 @@ var BaseHeader = map[string][]string{
 	"Accept-Language": {"zh-CN,en-US;qbaseHeaders=0.7,en;q=0.3"},
 }
 
-const (
+var (
 	OpenidURL = "https://v18.teachermate.cn/wechat-pro-ssr/?openid=1afa187e0cb54ddb7c7db49ad859f97f&from=wzj"
 	Openid    = "e32b7d07fc718217b1ccf724b0083df2"
+	lat = "30.520517"
+	lon = "114.423792"
 )
 
 var (
@@ -111,4 +115,48 @@ func RequestActiveSign(openid string) (status string, data string) {
 	status = res.Status
 	data = string(databyte)
 	return
+}
+
+//RequestSign 普通签到
+func RequestSign(openid string ,courseid int, signid int)(status string,data string){
+
+	//构建请求体
+	bodydata := map[string]interface{}{
+		"courseId": courseid,
+        "signId":   signid,
+		"lat": lat,
+		"lon": lon,
+	}
+	// 转化为json格式数据
+	jsondata, err := json.Marshal(bodydata)
+	if err!= nil {
+        log.Println("Marshal json err :", err)
+        return
+    }
+
+	// 定制post请求
+	req , err := http.NewRequest("POST", APISignIn, bytes.NewBuffer(jsondata))
+	if err != nil {
+		log.Println("Create RequestSign req err :", err)
+        return
+	}
+	for k, v := range BaseHeader {
+        req.Header[k] = v
+    }
+	req.Header.Add("Openid", openid)
+	req.Header.Add("referrer", APIReferrer)
+
+	client := &http.Client{
+
+	}
+	res ,err := client.Do(req)
+	if err !=nil {
+		log.Println("client req err ", err)
+        return
+	}
+	status = res.Status
+	databyte, _ := ioutil.ReadAll(res.Body)
+	data = string(databyte)
+	return	
+	
 }
