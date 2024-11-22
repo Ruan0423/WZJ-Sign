@@ -9,8 +9,10 @@ import (
 )
 
 func main() {
-	RequestStudentRole(Openid)
-	
+	fmt.Println(RequestStudentRole(Openid))
+	// fmt.Println(RequestStudentinfo(Openid))
+	fmt.Println(RequestActiveSign(Openid))
+
 }
 
 func ScanQrByfile(file string) (qr_content string, err error) {
