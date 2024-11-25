@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/gorilla/websocket"
+	"github.com/skip2/go-qrcode"
 )
 
 var errreq = errors.New("openid失效啦")
@@ -79,4 +81,21 @@ func GetopenidFromUrl(url string) string {
 // 向已经连接ws通讯的客户端发送消息
 func ResponsMsg(conn *websocket.Conn,msg string) error {
 	return conn.WriteMessage(websocket.TextMessage,[]byte(msg))
+}
+
+// 向ws客户端发送二维码数据
+func ResponseQR(conn *websocket.Conn,qrdata string) error {
+	qrbyte,err :=qrcode.Encode(qrdata,qrcode.Medium, 256)
+	if err!=nil {
+		return err
+	}
+	resdatawithbase64 := base64.RawStdEncoding.EncodeToString(qrbyte)
+	err =conn.WriteJSON(map[string]string{
+		"type":"qrcode",
+		"data":resdatawithbase64,
+	})
+	if err !=nil {
+		return err
+	}
+	return nil
 }

@@ -20,10 +20,16 @@
             padding: 5px;
             border-bottom: 1px solid #eee;
         }
+        .qrcode {
+            display: block;
+            margin: 10px auto;
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
-    <h1>WZJ Sign</h1>
+    <h1>微助教自动签到</h1>
     <form id="openidForm">
         <label for="openid">OpenID:</label>
         <input type="text" id="openid" name="openid" required>
@@ -32,14 +38,21 @@
     <div id="dataContainer"></div>
 
     <script>
+        let ws;
+        let openid;
+        const messages = []; // 存储消息列表
+
         document.getElementById('openidForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const openid = document.getElementById('openid').value.trim();
+            openid = document.getElementById('openid').value.trim();
             if (!openid) {
                 alert('请输入有效的 OpenID');
                 return;
             }
+            connectWebSocket();
+        });
 
+        async function connectWebSocket() {
             try {
                 // 发送 POST 请求获取 WebSocket URL
                 const response = await fetch('/wzjsign', {
@@ -57,24 +70,68 @@
                 const { wsUrl } = await response.json();
 
                 // 建立 WebSocket 连接
-                const ws = new WebSocket(wsUrl);
-                window.ws = ws;
+                ws = new WebSocket(wsUrl);
 
                 ws.onopen = function() {
                     console.log('WebSocket 连接已打开');
                     const dataContainer = document.getElementById('dataContainer');
                     dataContainer.innerHTML = ''; // 清空之前的数据
                     const info = document.createElement('div');
-                    info.textContent = '连接已建立，开始接收数据...获取个人信息中....';
+                    info.textContent = '与服务器后端连接已建立，开始验证openid并获取个人信息中....';
                     dataContainer.appendChild(info);
                 };
 
                 ws.onmessage = function(event) {
                     const dataContainer = document.getElementById('dataContainer');
-                    const newData = document.createElement('div');
-                    newData.className = 'data-item';
-                    newData.textContent = event.data;
-                    dataContainer.appendChild(newData);
+                    try {
+                        // 假设接收到的消息是 JSON 格式
+                        const message = JSON.parse(event.data);
+
+                        // 检查是否为二维码数据
+                        if (message.type === 'qrcode' && message.data) {
+                            const img = document.createElement('img');
+                            img.className = 'qrcode';
+                            img.src = `data:image/png;base64,${message.data}`;
+                            dataContainer.appendChild(img);
+                        } else {
+                            // 处理普通消息
+                            const newData = message.text || event.data;
+
+                            messages.push(newData);
+                            if (messages.length > 20) {
+                                messages.shift(); // 删除最老的消息
+                            }
+
+                            // 更新容器内容
+                            dataContainer.innerHTML = '';
+                            messages.forEach((msg) => {
+                                const msgDiv = document.createElement('div');
+                                msgDiv.className = 'data-item';
+                                msgDiv.textContent = msg;
+                                dataContainer.appendChild(msgDiv);
+                            });
+                        }
+                    } catch (err) {
+                        console.warn('无法解析消息:', event.data);
+
+                        // 如果解析失败，按普通文本处理
+                        const newData = event.data;
+
+                        messages.push(newData);
+                        if (messages.length > 20) {
+                            messages.shift(); // 删除最老的消息
+                        }
+
+                        // 更新容器内容
+                        dataContainer.innerHTML = '';
+                        messages.forEach((msg) => {
+                            const msgDiv = document.createElement('div');
+                            msgDiv.className = 'data-item';
+                            msgDiv.textContent = msg;
+                            dataContainer.appendChild(msgDiv);
+                        });
+                    }
+
                     dataContainer.scrollTop = dataContainer.scrollHeight; // 滚动到底部
                 };
 
@@ -84,6 +141,11 @@
                     const info = document.createElement('div');
                     info.textContent = '连接已关闭';
                     dataContainer.appendChild(info);
+
+                    // 自动重连
+                    if (openid) {
+                        setTimeout(connectWebSocket, 20000); // 5秒后重试
+                    }
                 };
 
                 ws.onerror = function(error) {
@@ -95,7 +157,7 @@
                 console.error(err);
                 alert('提交失败，请稍后重试。');
             }
-        });
+        }
     </script>
 </body>
 </html>
