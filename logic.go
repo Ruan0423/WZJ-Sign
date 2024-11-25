@@ -93,6 +93,7 @@ func ResponseQR(conn *websocket.Conn,qrdata string) error {
 	err =conn.WriteJSON(map[string]string{
 		"type":"qrcode",
 		"data":resdatawithbase64,
+		"qrUrl":qrdata,
 	})
 	if err !=nil {
 		return err

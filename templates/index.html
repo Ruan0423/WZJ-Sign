@@ -1,41 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>WZJ Sign</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traveler的微助教签到</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1 {
+            font-size: 2em;
+            color: rgb(17, 212, 43);
+            margin-bottom: 20px;
+        }
+        form {
+            opacity: 0.3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="text"] {
+            width: 300px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
         }
         #dataContainer {
+            opacity: 0.6;
             margin-top: 20px;
-            border: 1px solid #ccc;
-            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
             height: 300px;
-            overflow-y: scroll;
-            background-color: #f9f9f9;
+            width: 90%;
+            max-width: 500px;
+            overflow-y: auto;
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
         .data-item {
-            padding: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
             border-bottom: 1px solid #eee;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .data-item:last-child {
+            border-bottom: none;
         }
         .qrcode {
             display: block;
-            margin: 10px auto;
+            margin: 20px auto;
             max-width: 100%;
             height: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        @media (max-width: 600px) {
+            form {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            input[type="text"] {
+                width: 90%;
+            }
+            #dataContainer {
+                width: 100%;
+                height: 250px;
+            }
         }
     </style>
 </head>
-<body>
+<body style="background-image: url('https://img2.baidu.com/it/u=1300158261,1366358750&fm=253&fmt=auto&app=138&f=JPEG?w=1067&h=800'); background-size: cover; background-repeat: no-repeat;">
     <h1>微助教自动签到</h1>
+    
     <form id="openidForm">
         <label for="openid">OpenID:</label>
-        <input type="text" id="openid" name="openid" required>
+        <input type="text" id="openid" name="openid" placeholder="请输入您的 OpenID" required>
         <button type="submit">提交</button>
     </form>
     <div id="dataContainer"></div>
+    <div id="helpContainer"></div>
 
     <script>
         let ws;
@@ -51,10 +128,10 @@
             }
             connectWebSocket();
         });
+        document.getElementById("helpContainer").innerHTML="openid为微助教的主页链接，进入微助教首页前点复制链接。复制的链接中包含openid就行。<br>例如：https://v18.teachermate.cn/wechat-pro-ssr/?openid=8adc79cf781c0a40e3ee2b447e090d97&from=wzj或者<br>openid=8adc79cf781c0a40e3ee2b447e090d97或者8adc79cf781c0a40e3ee2b447e090d97<br>注意：每次进入微助教的任何页面都会刷新openid,之前的就会失效。所以复制好openid后不要再进入微助教任何页面。一个openid的有效期为至少3小时。<br>如果是定位签到或者普通签到，随便在任何浏览器打开链接输入openid即可。如果是二维码签到，请使用微信打开链接签到或者扫码签到。<br>可联系QQ1309802365"
 
         async function connectWebSocket() {
             try {
-                // 发送 POST 请求获取 WebSocket URL
                 const response = await fetch('/wzjsign', {
                     method: 'POST',
                     headers: {
@@ -68,14 +145,12 @@
                 }
 
                 const { wsUrl } = await response.json();
-
-                // 建立 WebSocket 连接
                 ws = new WebSocket(wsUrl);
 
                 ws.onopen = function() {
                     console.log('WebSocket 连接已打开');
                     const dataContainer = document.getElementById('dataContainer');
-                    dataContainer.innerHTML = ''; // 清空之前的数据
+                    dataContainer.innerHTML = ''; 
                     const info = document.createElement('div');
                     info.textContent = '与服务器后端连接已建立，开始验证openid并获取个人信息中....';
                     dataContainer.appendChild(info);
@@ -84,25 +159,29 @@
                 ws.onmessage = function(event) {
                     const dataContainer = document.getElementById('dataContainer');
                     try {
-                        // 假设接收到的消息是 JSON 格式
                         const message = JSON.parse(event.data);
-
-                        // 检查是否为二维码数据
                         if (message.type === 'qrcode' && message.data) {
+                            //创建url链接
+                            const link = document.createElement('a');
+                            link.className = 'link-item';
+                            link.href = message.qrUrl;
+                            link.textContent = `点击签到: ${message.qrUrl}`;
+                            link.target = '_blank'; // 新标签页打开
+                            dataContainer.appendChild(link);
+
                             const img = document.createElement('img');
                             img.className = 'qrcode';
                             img.src = `data:image/png;base64,${message.data}`;
                             dataContainer.appendChild(img);
+
                         } else {
-                            // 处理普通消息
                             const newData = message.text || event.data;
 
                             messages.push(newData);
                             if (messages.length > 20) {
-                                messages.shift(); // 删除最老的消息
+                                messages.shift(); 
                             }
 
-                            // 更新容器内容
                             dataContainer.innerHTML = '';
                             messages.forEach((msg) => {
                                 const msgDiv = document.createElement('div');
@@ -113,16 +192,13 @@
                         }
                     } catch (err) {
                         console.warn('无法解析消息:', event.data);
-
-                        // 如果解析失败，按普通文本处理
                         const newData = event.data;
 
                         messages.push(newData);
                         if (messages.length > 20) {
-                            messages.shift(); // 删除最老的消息
+                            messages.shift(); 
                         }
 
-                        // 更新容器内容
                         dataContainer.innerHTML = '';
                         messages.forEach((msg) => {
                             const msgDiv = document.createElement('div');
@@ -132,7 +208,7 @@
                         });
                     }
 
-                    dataContainer.scrollTop = dataContainer.scrollHeight; // 滚动到底部
+                    dataContainer.scrollTop = dataContainer.scrollHeight;
                 };
 
                 ws.onclose = function() {
@@ -142,9 +218,8 @@
                     info.textContent = '连接已关闭';
                     dataContainer.appendChild(info);
 
-                    // 自动重连
                     if (openid) {
-                        setTimeout(connectWebSocket, 20000); // 5秒后重试
+                        setTimeout(connectWebSocket, 20000);
                     }
                 };
 
