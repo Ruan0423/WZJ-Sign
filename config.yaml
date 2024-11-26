@@ -10,7 +10,7 @@ position:
 email:
   host : "smtp.qq.com"
   port : 465
-  userName : "trv666@qq.com"
-  password : "zpqpoqldqpdwhgbi"
+  userName : "youremail"
+  password : "yourpassword"
 
 
