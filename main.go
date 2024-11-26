@@ -26,7 +26,7 @@ func Start() {
 	r.LoadHTMLFiles("templates/index.html")
 	r.GET("/wzjsign", indexHandler)
 	r.POST("/wzjsign", postHandler)
-	r.GET("/wzjsign/ws", wsHandler) // WebSocket 连接处理
+	r.GET("/wzjsign/ws", wsHandlernew) // WebSocket 连接处理
 	r.Run(fmt.Sprintf(":%d", settings.Conf.APP.Port))
 
 }
