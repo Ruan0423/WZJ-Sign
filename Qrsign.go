@@ -55,7 +55,7 @@ func Qrsign(clientconn *websocket.Conn, courseID int, signID int) error {
 	// 连接服务器
 	subconn, _, err := websocket.DefaultDialer.Dial(serverURL, nil)
 	if err != nil {
-		log.Fatalf("Failed to connect: %v", err)
+		log.Printf("Failed to connect: %v", err)
 		return err
 	}
 	defer subconn.Close()
@@ -70,27 +70,27 @@ func Qrsign(clientconn *websocket.Conn, courseID int, signID int) error {
 		"id":                       "1",
 	}
 	if err := subconn.WriteJSON(handshakeMsg); err != nil {
-		log.Fatalf("Failed to send handshake: %v", err)
+		log.Printf("Failed to send handshake: %v", err)
 		return err
 	}
 
 	// 读取握手响应
 	_, message, err := subconn.ReadMessage()
 	if err != nil {
-		log.Fatalf("Failed to read handshake response: %v", err)
+		log.Printf("Failed to read handshake response: %v", err)
 		return err
 	}
 
 	// 解析握手响应（数组形式）
 	var handshakeRes []HandshakeResponse
 	if err := json.Unmarshal(message, &handshakeRes); err != nil {
-		log.Fatalf("Failed to parse handshake response: %v", err)
+		log.Printf("Failed to parse handshake response: %v", err)
 		return err
 	}
 
 	// 检查握手结果
 	if len(handshakeRes) == 0 || !handshakeRes[0].Successful {
-		log.Fatalf("Handshake failed: %+v", handshakeRes)
+		log.Printf("Handshake failed: %+v", handshakeRes)
 		return err
 	}
 
@@ -107,7 +107,7 @@ func Qrsign(clientconn *websocket.Conn, courseID int, signID int) error {
 			"id":             "2",
 		}
 		if err := subconn.WriteJSON(connectMsg); err != nil {
-			log.Fatalf("Failed to send connect message: %v", err)
+			log.Printf("Failed to send connect message: %v", err)
 			return
 		}
 	}
@@ -124,7 +124,7 @@ func Qrsign(clientconn *websocket.Conn, courseID int, signID int) error {
 		"id":           "3",
 	}
 	if err := subconn.WriteJSON(subscribeMsg); err != nil {
-		log.Fatalf("Failed to send subscribe message: %v", err)
+		log.Printf("Failed to send subscribe message: %v", err)
 	}
 	log.Println("Subscription message sent")
 
@@ -151,7 +151,7 @@ func Qrsign(clientconn *websocket.Conn, courseID int, signID int) error {
 	for {
 		_, message, err := subconn.ReadMessage()
 		if err != nil {
-			log.Fatalf("Failed to read message: %v", err)
+			log.Printf("Failed to read message: %v", err)
 		}
 		var submsg []SubscribeResponse
 		if err := json.Unmarshal(message, &submsg); err != nil {

@@ -8,6 +8,7 @@ var Conf = new(APPconfig)
 type APPconfig struct {
 	*APP `mapstructure:"app"`
 	*Position `mapstructure:"position"`
+	*Email
 }
 
 type APP struct {
@@ -20,6 +21,12 @@ type APP struct {
 type Position struct {
 	Lat string `mapstructure:"lat"`
 	Lon string `mapstructure:"lon"`
+}
+type Email struct {
+	Port int `mapstructure:"port`
+	Host string `mapstructure:"host"`
+	UserName string `mapstructure:"username"`
+	PassWord string `mapstructure:"password"`
 }
 
 func Init() (err error){

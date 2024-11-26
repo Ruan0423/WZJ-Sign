@@ -1,14 +1,17 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sign/settings"
 	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/skip2/go-qrcode"
+	"gopkg.in/gomail.v2"
 )
 
 var errreq = errors.New("openid失效啦")
@@ -97,6 +100,28 @@ func ResponseQR(conn *websocket.Conn,qrdata string) error {
 	})
 	if err !=nil {
 		return err
+	}
+	return nil
+}
+// 配置邮箱
+
+func SendEmail(to string, msg string) error {
+	e := gomail.NewMessage()
+	e.SetHeader("From",settings.Conf.Email.UserName)
+	e.SetHeader("To",to)
+	e.SetHeader("Subject","微助教自动签到通知")
+
+	e.SetBody("text/plain", msg)
+
+	d :=gomail.NewDialer(
+		settings.Conf.Email.Host,
+		settings.Conf.Email.Port,
+		settings.Conf.Email.UserName,
+		settings.Conf.Email.PassWord,
+	)
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	if err := d.DialAndSend(e); err != nil {
+		return  err
 	}
 	return nil
 }

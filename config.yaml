@@ -1,11 +1,16 @@
 app:
   name: "wzj-sign"
   version: "1.0.1"
-  port: 8080
+  port: 8888
   model: "dev"
 position:
   lat: "30.520517"
   lon: "114.423792"
 
+email:
+  host : "smtp.qq.com"
+  port : 25
+  userName : "trv666@qq.com"
+  password : "zpqpoqldqpdwhgbi"
 
 
