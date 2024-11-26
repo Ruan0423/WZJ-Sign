@@ -144,8 +144,11 @@
             }
             connectWebSocket();
         });
-        document.getElementById("helpContainer").innerHTML="openid为微助教的主页链接，进入微助教首页前点复制链接。复制的链接中包含openid就行。<br>例如：https://v18.teachermate.cn/wechat-pro-ssr/?openid=8adc79cf781c0a40e3ee2b447e090d97&from=wzj或者<br>openid=8adc79cf781c0a40e3ee2b447e090d97或者8adc79cf781c0a40e3ee2b447e090d97<br>注意：每次进入微助教的任何页面都会刷新openid,之前的就会失效。所以复制好openid后不要再进入微助教任何页面。一个openid的有效期为至少3小时。<br>如果是定位签到或者普通签到，随便在任何浏览器打开链接输入openid即可。如果是二维码签到，请使用微信打开链接签到或者扫码签到。<br>可联系QQ1309802365"
-
+        const dataContainer = document.getElementById('dataContainer');
+        const helpContainer = document.getElementById('helpContainer');
+        helpContainer.innerHTML="openid为微助教的主页链接，进入微助教首页前点复制链接。复制的链接中包含openid就行。<br>例如：https://v18.teachermate.cn/wechat-pro-ssr/?openid=8adc79cf781c0a40e3ee2b447e090d97&from=wzj或者<br>openid=8adc79cf781c0a40e3ee2b447e090d97或者8adc79cf781c0a40e3ee2b447e090d97<br>注意：每次进入微助教的任何页面都会刷新openid,之前的就会失效。所以复制好openid后不要再进入微助教任何页面。一个openid的有效期为至少3小时。<br>如果是定位签到或者普通签到，随便在任何浏览器打开链接输入openid即可。如果是二维码签到，请使用微信打开链接签到或者扫码签到。";
+        dataContainer.innerHTML = helpContainer.innerHTML;
+        helpContainer.innerHTML = "@By-Traveler-1309802365"
         async function connectWebSocket() {
             try {
                 const response = await fetch('/wzjsign', {
