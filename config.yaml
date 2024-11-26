@@ -1,7 +1,7 @@
 app:
   name: "wzj-sign"
   version: "1.0.1"
-  port: 8888
+  port: 8085
   model: "dev"
 position:
   lat: "30.520517"
@@ -9,7 +9,7 @@ position:
 
 email:
   host : "smtp.qq.com"
-  port : 25
+  port : 465
   userName : "trv666@qq.com"
   password : "zpqpoqldqpdwhgbi"
 

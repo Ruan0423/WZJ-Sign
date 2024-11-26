@@ -158,7 +158,7 @@ func Qrsign(clientconn *websocket.Conn, courseID int, signID int) error {
 			fmt.Println(err)
 		} else {
 			if submsg[0].ClientID == "" {
-				ResponsMsg(clientconn, "二维码签到链接："+submsg[0].Data.QrUrl)
+				// ResponsMsg(clientconn, "二维码签到链接："+submsg[0].Data.QrUrl)
 				ResponseQR(clientconn, submsg[0].Data.QrUrl)
 			} else {
 				if submsg[0].ClientID != "" {
@@ -172,8 +172,6 @@ func Qrsign(clientconn *websocket.Conn, courseID int, signID int) error {
 			close(stop)
 			return fmt.Errorf("二维码签到结束！")
 		}
-		// 打印接收到的消息
-		log.Printf("Received message: %s", message)
 	}
 }
 
