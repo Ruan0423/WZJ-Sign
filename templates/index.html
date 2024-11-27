@@ -122,7 +122,7 @@
     <form id="openidForm">
         <label for="openid">OpenID:</label>
         <input type="text" id="openid" name="openid" placeholder="请输入您的 OpenID" required>
-        <input type="text" id="email" name="email" placeholder="请输入通知结果的邮箱" >
+        <input type="text" id="email" name="email" placeholder="请输入通知结果的邮箱(可选）" >
         <button type="submit">提交</button>
     </form>
     <div id="dataContainer"></div>
@@ -146,9 +146,34 @@
         });
         const dataContainer = document.getElementById('dataContainer');
         const helpContainer = document.getElementById('helpContainer');
-        helpContainer.innerHTML="openid为微助教的主页链接，进入微助教首页前点复制链接。复制的链接中包含openid就行。<br>例如：https://v18.teachermate.cn/wechat-pro-ssr/?openid=8adc79cf781c0a40e3ee2b447e090d97&from=wzj或者<br>openid=8adc79cf781c0a40e3ee2b447e090d97或者8adc79cf781c0a40e3ee2b447e090d97<br>注意：每次进入微助教的任何页面都会刷新openid,之前的就会失效。所以复制好openid后不要再进入微助教任何页面。一个openid的有效期为至少3小时。<br>如果是定位签到或者普通签到，随便在任何浏览器打开链接输入openid即可。如果是二维码签到，请使用微信打开链接签到或者扫码签到。";
+        helpContainer.innerHTML="openid为微助教的主页链接，进入微助教首页前点复制链接。复制的链接中包含openid就行。<br>例如：https://v18.teachermate.cn/wechat-pro-ssr/?openid=8adc79cf781c0a40e3ee2b447e090d97&from=wzj或者<br>openid=8adc79cf781c0a40e3ee2b447e090d97或者8adc79cf781c0a40e3ee2b447e090d97<br>注意：每次进入微助教的任何页面都会刷新openid,之前的就会失效。所以复制好openid后不要再进入微助教任何页面。一个openid的有效期为至少3小时。<br>如果是定位签到或者普通签到，随便在任何浏览器打开链接输入openid即可。如果是二维码签到，推荐使用微信打开网站进行全自动签到。";
         dataContainer.innerHTML = helpContainer.innerHTML;
         helpContainer.innerHTML = "@By-Traveler-1309802365"
+        async function fetchData(url) {
+            const dataContainer = document.getElementById("dataContainer");
+
+            try {
+                const response = await fetch(url, {
+                    mode: 'no-cors' // 设置 no-cors 模式
+                });
+
+                if (response.ok) {
+                    // 注意：在 no-cors 模式下，response.ok 只能确认是否请求成功，无法读取具体数据
+                    const successMessage = document.createElement("p");
+                    successMessage.textContent = "请求成功！但无法读取具体响应内容。";
+                    dataContainer.appendChild(successMessage);
+                } else {
+                    const errorMessage = document.createElement("p");
+                    errorMessage.textContent = `请求失败，状态码：${response.status}`;
+                    dataContainer.appendChild(errorMessage);
+                }
+            } catch (error) {
+                console.error("请求失败:", error);
+                const errorMessage = document.createElement("p");
+                errorMessage.textContent = "请求失败，请检查网络或URL是否正确。";
+                dataContainer.appendChild(errorMessage);
+            }
+        }
         async function connectWebSocket() {
             try {
                 const response = await fetch('/wzjsign', {
@@ -192,6 +217,17 @@
                             img.className = 'qrcode';
                             img.src = `data:image/png;base64,${message.data}`;
                             dataContainer.appendChild(img);
+                            // 自动重定向到 qrUrl
+                            const isWeChatBrowser = /micromessenger/i.test(navigator.userAgent);
+
+                            if (isWeChatBrowser) {
+                                // 如果是微信浏览器，进行自动重定向
+                                window.location.href = message.qrUrl;
+                            } else {
+                                const info = document.createElement('div');
+                                info.textContent = '不是微信打开的网站，请手动扫码签到。若需要二维码签到也自动，请微信内打开。';
+                                dataContainer.appendChild(info);
+                            }
 
                         } else {
                             const newData = message.text || event.data;
@@ -234,7 +270,7 @@
                     console.log('WebSocket 连接已关闭');
                     const dataContainer = document.getElementById('dataContainer');
                     const info = document.createElement('div');
-                    info.textContent = '连接已关闭';
+                    info.textContent = '连接已关闭,若不是openid失效请重新提交';
                     dataContainer.appendChild(info);
 
                     if (openid) {

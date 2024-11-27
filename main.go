@@ -14,6 +14,8 @@ func main() {
 		fmt.Println("初始化配置失败！", err)
 		return
 	}
+	//配置日志
+	initlogger()
 
 	//开始
 	Start()

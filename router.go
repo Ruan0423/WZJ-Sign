@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"sign/settings"
 	"sync"
 	"time"
 
@@ -78,13 +79,19 @@ func wsHandlernew(c *gin.Context) {
 		return
 	}
 	//获取个人信息并返回
-	name, err := getstudentName(openid)
+	studentinfo, err := getstudentInfo(openid)
 	if err != nil {
 		ResponsMsg(conn, err.Error())
 		conn.Close()
 		return
 	}
-	ResponsMsg(conn, name.(string))
+	name :=studentinfo.Name
+	//记录签到日志
+	logger.Println(studentinfo,email,clientID,c.Request.UserAgent())
+	if err :=SendEmail(settings.Conf.Email.UserName,fmt.Sprintf("%s %s",name,studentinfo.CollegeName));err!=nil{
+		fmt.Println("发送邮件失败！",err)
+	}
+	ResponsMsg(conn, name + studentinfo.StudentNumber)
 
 
 	for {

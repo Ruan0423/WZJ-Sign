@@ -25,23 +25,36 @@ func Verifyopenid(status string) bool {
 }
 
 // 获取学生姓名
-func getstudentName(openid string) (interface{}, error) {
+func getstudentInfo(openid string) (StudenetInfo, error) {
+	var data_role []StudenetInfo
+	//获取姓名
 	type Item struct {
 		ItemName    string      `json:"item_name"`
 		ItemComment string      `json:"item_comment"`
 		ItemValue   interface{} `json:"item_value"`
 	}
-	status, jsondata := RequestStudentinfo(openid)
+	status, jsondata_name := RequestStudentinfo(openid)
 	if !Verifyopenid(status) {
-		return "nil", errreq
+		return StudenetInfo{}, errreq
 	}
 	var data [][]Item
-	if err := json.Unmarshal([]byte(jsondata), &data); err != nil {
+	if err := json.Unmarshal([]byte(jsondata_name), &data); err != nil {
 		fmt.Println("Error parsing JSON:", err)
-		return "nil", errreq
+		return StudenetInfo{}, errreq
 	}
+	student_name := data[0][2].ItemValue
 
-	return data[0][2].ItemValue, nil
+	//获取其他信息
+	status, jsondata_role := RequestStudentRole(openid)
+	if !Verifyopenid(status) {
+		return StudenetInfo{}, errreq
+	}
+	if err := json.Unmarshal([]byte(jsondata_role), &data_role); err != nil {
+		fmt.Println("Error parsing JSON:", err)
+		return StudenetInfo{}, errreq
+	}
+	data_role[0].Name = student_name.(string)
+	return data_role[0], nil
 }
 
 // getActiveSign 获取正在进行的签到，返回的是签到课程列表。

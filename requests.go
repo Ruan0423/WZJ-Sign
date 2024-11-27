@@ -18,8 +18,8 @@ var BaseHeader = map[string][]string{
 }
 
 var (
-	OpenidURL = "https://v18.teachermate.cn/wechat-pro-ssr/?openid=1afa187e0cb54ddb7c7db49ad859f97f&from=wzj"
-	Openid    = "87effcd8fd92ff836edd956efa648118"
+	OpenidURL = "https://v18.teachermate.cn/wechat-pro-ssr/?openid=813883a29388259f56f6ba7c0fa7315a&from=wzj"
+	Openid    = "813883a29388259f56f6ba7c0fa7315a"
 	lat = "30.520517"
 	lon = "114.423792"
 )

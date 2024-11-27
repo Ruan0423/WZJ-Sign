@@ -13,3 +13,12 @@ type SignResult struct {
 	SignRank  int    `json:"signRank"`
 	MsgClient string `json:"msgClient"`
 }
+
+// 个人信息
+type StudenetInfo struct {
+	Name           string `json:"item_name"`       //学生姓名
+	ClassName      string `json:"class_name"`      //班级
+	StudentNumber  string `json:"student_number"`  // 学号
+	CollegeName    string `json:"college_name"`    //大学
+	DepartmentName string `json:"department_name"` //学院
+}
