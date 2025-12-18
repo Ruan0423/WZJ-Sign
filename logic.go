@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sign/settings"
 	"strings"
 
@@ -72,8 +75,8 @@ func getActiveSign(openid string) ([]ActiveSign, error) {
 }
 
 // 获取普通签到结果
-func GetCommonSignRes(openid string, courseid int, signid int) (SignResult, error) {
-	status, jsondata := RequestSign(openid, courseid, signid)
+func GetCommonSignRes(openid string, courseid int, signid int,lat float64,lon float64) (SignResult, error) {
+	status, jsondata := RequestSign(openid, courseid, signid,lat,lon)
 	if !Verifyopenid(status) {
 		return SignResult{}, errreq
 	}
@@ -138,5 +141,117 @@ func SendEmail(to string, msg string) error {
 	if err := d.DialAndSend(e); err != nil {
 		return err
 	}
+	return nil
+}
+
+// 获取所有课程的作业
+
+func GetHomeworks(openid string) (Homeworks , error) {
+	status , data := RequsetHomwork(openid)
+	if status == "304 Not Modified" {
+		GetHomeworks(openid)
+	} else {
+		if !Verifyopenid(status) {
+			return Homeworks{},errreq
+		}else {
+			var Homeworks Homeworks
+			err := json.Unmarshal([]byte(data),&Homeworks)
+			if err!=nil {
+				return Homeworks,err
+			}
+			return Homeworks,nil
+		}
+	}
+	return Homeworks{},nil
+}
+
+// 获取某个课程的答题
+func GetQuestions(openid string, CourseID int)(Question,error){
+	status , data := RequestQuestions(openid,CourseID)
+	if status == "304 Not Modified" {
+		GetQuestions(openid,CourseID)
+	} else {
+		if !Verifyopenid(status) {
+			return Question{},errreq
+		}else {
+			var Question Question
+			err := json.Unmarshal([]byte(data),&Question)
+			if err!=nil {
+				return Question,err
+			}
+			return Question,nil
+		}
+	}
+	return Question{},nil
+}
+
+
+// 从user.txt中删除某个用户
+func RemoveUserFromFile(userName, fileName string) error {
+	// 确认输入文件存在
+	if _, err := os.Stat(fileName); os.IsNotExist(err) {
+		return fmt.Errorf("文件 %s 不存在", fileName)
+	}
+
+	// 打开文件进行读取
+	file, err := os.Open(fileName)
+	if err != nil {
+		return fmt.Errorf("打开文件时出错: %v", err)
+	}
+	defer file.Close()
+
+	// 获取文件所在目录
+	dir := filepath.Dir(fileName)
+	// 创建临时文件用于保存结果，放在同一目录下
+	tempFile, err := os.CreateTemp(dir, "temp*.txt")
+	if err != nil {
+		return fmt.Errorf("创建临时文件时出错: %v", err)
+	}
+	defer tempFile.Close()
+
+	removed := false
+	scanner := bufio.NewScanner(file)
+	writer := bufio.NewWriter(tempFile)
+
+	// 遍历每一行，并将不匹配的行写入临时文件
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.EqualFold(line, userName) {
+			removed = true
+			continue // 跳过当前行(即删除指定用户)
+		}
+		_, _ = writer.WriteString(line + "\n")
+	}
+
+	// 检查错误
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("读取文件时出错: %v", err)
+	}
+
+	// 刷新缓冲区
+	if err := writer.Flush(); err != nil {
+		return fmt.Errorf("刷新写入缓冲区时出错: %v", err)
+	}
+
+	// 关闭原始文件和临时文件以确保它们不再被占用
+	file.Close()
+	tempFile.Close()
+
+	// 如果找到了并移除了指定的姓名，则替换原文件
+	if removed {
+		// 删除原文件
+		if err := os.Remove(fileName); err != nil {
+			return fmt.Errorf("删除原文件时出错: %v", err)
+		}
+
+		// 重命名临时文件为原文件名
+		if err := os.Rename(tempFile.Name(), fileName); err != nil {
+			return fmt.Errorf("重命名临时文件时出错: %v", err)
+		}
+	} else {
+		os.Remove(tempFile.Name()) // 删除临时文件
+		return fmt.Errorf("未找到姓名: %s", userName)
+	}
+
 	return nil
 }

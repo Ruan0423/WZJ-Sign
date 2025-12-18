@@ -22,3 +22,21 @@ type StudenetInfo struct {
 	CollegeName    string `json:"college_name"`    //大学
 	DepartmentName string `json:"department_name"` //学院
 }
+
+// 作业信息
+type Homwork struct {
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	Count         int    `json:"count"` //作业的数量
+	HomeworkCount int    `json:"homeworkCount"` //1就是开启状态
+}
+
+// 存储所有课程作业的信息
+type Homeworks struct {
+	Homeworks []Homwork `json:"courses"`
+}
+
+// 存储课程答题信息
+type Question struct {
+	QuestionNum int `json:"questionNum"`
+}

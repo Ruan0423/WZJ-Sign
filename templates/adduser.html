@@ -1,0 +1,45 @@
+<!-- templates/adduser.html -->
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>User Management</title>
+</head>
+<body>
+    <h1>User Management</h1>
+    
+    <form method="POST">
+        <input type="text" name="name" placeholder="Enter name">
+        <button type="submit" name="action" value="add">Add User</button>
+        <button type="submit" name="action" value="refresh">Refresh</button>
+    </form>
+    <h2>Current Users ({{len .users}})</h2>
+    <ul>
+        {{range .users}}<li>{{.}}</li>{{end}}
+    </ul>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Management</title>
+</head>
+<body>
+    <h1>User Management</h1>
+    
+    <form method="POST">
+        <input type="text" name="name" placeholder="Enter name">
+        <button type="submit" name="action" value="add">Add User</button>
+        <button type="submit" name="action" value="delete">Delete User</button>
+        <button type="submit" name="action" value="refresh">Refresh</button>
+        <!-- 新增模式切换按钮 -->
+        <button type="submit" name="action" value="toggle_mode">
+            {{if .Test}}设置为权限模式{{else}}设置为测试模式{{end}}
+        </button>
+    </form>
+    <h2>Current Users ({{len .users}})</h2>
+    <ul>
+        {{range .users}}<li>{{.}}</li>{{end}}
+    </ul>
+</body>
+</html>

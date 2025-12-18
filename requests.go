@@ -19,9 +19,9 @@ var BaseHeader = map[string][]string{
 
 var (
 	OpenidURL = "https://v18.teachermate.cn/wechat-pro-ssr/?openid=813883a29388259f56f6ba7c0fa7315a&from=wzj"
-	Openid    = "813883a29388259f56f6ba7c0fa7315a"
-	lat = "30.520517"
-	lon = "114.423792"
+	Openid    = "0de5f826372780345f0d6bce4844d5be"
+	Lat = "30.520517"
+	Lon = "114.423792"
 )
 
 var (
@@ -29,7 +29,9 @@ var (
 	APIStudentinfo = "https://v18.teachermate.cn/wechat-api/v2/students"
 	APIStudentRole = "https://v18.teachermate.cn/wechat-api/v2/students/role"
 	APIActiveSign  = "https://v18.teachermate.cn/wechat-api/v1/class-attendance/student/active_signs"
-
+	APIHomework = "https://v18.teachermate.cn/wechat-api/v1/homework/courses" //作业接口（所有课程的作业）
+	APIQuestions = "https://v18.teachermate.cn/wechat-api/v3/students/questions?courseId=%d&isOpen=1&page=0" //需要更改isopen = 1来获取开放的答题
+	APIClasses = "https://v18.teachermate.cn/wechat-pro-ssr/student/sign/classes"
 	APISignIn = "https://v18.teachermate.cn/wechat-api/v1/class-attendance/student-sign-in"
 )
 
@@ -120,7 +122,7 @@ func RequestActiveSign(openid string) (status string, data string) {
 }
 
 //RequestSign 普通签到
-func RequestSign(openid string ,courseid int, signid int)(status string,data string){
+func RequestSign(openid string ,courseid int, signid int,lat float64 ,lon float64)(status string,data string){
 
 	//构建请求体
 	bodydata := map[string]interface{}{
@@ -162,4 +164,61 @@ func RequestSign(openid string ,courseid int, signid int)(status string,data str
 	data = string(databyte)
 	return	
 	
+}
+
+// 获取所有作业的信息
+func RequsetHomwork(openid string) (status string, data string){
+
+	req,err := http.NewRequest("GET", APIHomework,nil)
+	if err != nil {
+		log.Println("Create RequestActiveSign req err :", err)
+		return
+	}
+	for k, v := range BaseHeader {
+		req.Header[k] = v
+	}
+	req.Header.Add("Openid", openid)
+	req.Header.Add("referrer", APIReferrer)
+
+	client := &http.Client{Timeout: 10 * time.Second,}
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Println("client req err ", err)
+		return
+	}
+	defer res.Body.Close()
+	databyte, _ := ioutil.ReadAll(res.Body)
+	status = res.Status
+	data = string(databyte)
+	return
+
+}
+//获取某个课程的答题
+func RequestQuestions(openid string,couresID int) (status string, data string){
+
+	req,err := http.NewRequest("GET", fmt.Sprintf(APIQuestions,couresID),nil)
+	if err != nil {
+		log.Println("Create RequestActiveSign req err :", err)
+		return
+	}
+	for k, v := range BaseHeader {
+		req.Header[k] = v
+	}
+	req.Header.Add("Openid", openid)
+	req.Header.Add("referrer", APIReferrer)
+
+	client := &http.Client{Timeout: 10 * time.Second,}
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Println("client req err ", err)
+		return
+	}
+	defer res.Body.Close()
+	databyte, _ := ioutil.ReadAll(res.Body)
+	status = res.Status
+	data = string(databyte)
+	return
+
 }

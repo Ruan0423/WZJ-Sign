@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traveler的微助教签到</title>
+    <title>微助教签到</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -23,7 +23,7 @@
             margin-bottom: 20px;
         }
         form {
-            opacity: 0.3;
+            opacity: 0.5;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -116,13 +116,15 @@
         }
     </style>
 </head>
-<body style="background-image: url('https://chinese.freecodecamp.org/news/content/images/size/w2000/2022/10/jonatan-pie-3l3RwQdHRHg-unsplash.jpeg'); background-size: cover; background-repeat: no-repeat;">
+<body onload="setBackgroundImage()">
     <h1>微助教自动签到</h1>
     
     <form id="openidForm">
         <label for="openid">OpenID:</label>
         <input type="text" id="openid" name="openid" placeholder="请输入您的 OpenID" required>
-        <input type="text" id="email" name="email" placeholder="请输入通知结果的邮箱(可选）" >
+        <!-- 新增经纬度输入 -->
+        <input type="text" id="latlon" name="latlon" placeholder="若GPS签到需经纬度（格式30.59,114.37）" pattern="^-?\d+\.\d+,-?\d+\.\d+$">
+        <input type="text" id="email" name="email" placeholder="请输入通知结果的邮箱（可选）" >
         <button type="submit">提交</button>
     </form>
     <div id="dataContainer"></div>
@@ -138,17 +140,28 @@
             e.preventDefault();
             openid = document.getElementById('openid').value.trim();
             email = document.getElementById('email').value.trim();
+            latlon = document.getElementById('latlon').value.trim();
+
             if (!openid) {
                 alert('请输入有效的 OpenID');
                 return;
             }
+            if (latlon) {
+                            // 验证经纬度格式
+            if (!/^-?\d+\.\d+,-?\d+\.\d+$/.test(latlon)) {
+                alert('经纬度格式不正确，请使用类似30.50949,114.347的格式,中间的逗号是英文逗号');
+                return;
+            }
+
+            }
+
             connectWebSocket();
         });
         const dataContainer = document.getElementById('dataContainer');
         const helpContainer = document.getElementById('helpContainer');
-        helpContainer.innerHTML="openid为微助教的主页链接，进入微助教首页前点复制链接。复制的链接中包含openid就行。<br>例如：https://v18.teachermate.cn/wechat-pro-ssr/?openid=8adc79cf781c0a40e3ee2b447e090d97&from=wzj或者<br>openid=8adc79cf781c0a40e3ee2b447e090d97或者8adc79cf781c0a40e3ee2b447e090d97<br>注意：每次进入微助教的任何页面都会刷新openid,之前的就会失效。所以复制好openid后不要再进入微助教任何页面。一个openid的有效期为至少3小时。<br>如果是定位签到或者普通签到，随便在任何浏览器打开链接输入openid即可。如果是二维码签到，推荐使用微信打开网站进行全自动签到。";
+        helpContainer.innerHTML="经纬度为GPS的坐标，进入https://lbs.qq.com/getPoint/，左上角搜索教室的地点，然后右边复制查询到的坐标.<br>openid为微助教的主页链接,复制的链接中包含openid就行。<br>例如：https://v18.teachermate.cn/wechat-pro-ssr/?openid=8adc79cf781c0a40e3ee2b447e090d97&from=wzj或者<br>openid=8adc79cf781c0a40e3ee2b447e090d97或者8adc79cf781c0a40e3ee2b447e090d97<br>注意：1.每次进入微助教的任何页面都会刷新openid,之前的就会失效。所以复制好openid后不要再进入微助教任何页面。一个openid的有效期为至少3小时。<br>2.如果是定位签到或者普通签到，随便在任何浏览器打开链接输入openid即可。<br>3.如果是二维码签到，推荐使用微信打开网站进行全自动签到。<br>4.若遇到卡顿请重新点提交.<br>5.使用该方法产生的后果均自行承担，有一定概率失效，请勿要百分百依赖";
         dataContainer.innerHTML = helpContainer.innerHTML;
-        helpContainer.innerHTML = "@By-Traveler-1309802365"
+        helpContainer.innerHTML = "@WeChat-Trv0802"
         async function fetchData(url) {
             const dataContainer = document.getElementById("dataContainer");
 
@@ -181,7 +194,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ openid ,email}),
+                    body: JSON.stringify({ openid ,email,latlon}),
                 });
 
                 if (!response.ok) {
@@ -280,14 +293,25 @@
 
                 ws.onerror = function(error) {
                     console.error('WebSocket 错误:', error);
-                    alert('WebSocket 连接发生错误，请检查控制台日志。');
+                    alert('你的网络不稳定，请重新提交。');
                 };
 
             } catch (err) {
                 console.error(err);
-                alert('提交失败，请稍后重试。');
+                alert('网络原因提交失败，请稍后重试。或者只提交你的openid（不含https://..),例如提交“openid=8adc79cf781c0a4"或者"8adc79cf781c0a4"');
             }
         }
+        function setBackgroundImage() {
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // 手机设备
+      document.body.style.backgroundImage = "url('https://img2.baidu.com/it/u=3117152704,1079598557&fm=253&fmt=auto&app=138&f=JPEG?w=800&h=1422')"; // 替换为您的手机图片URL
+    } else {
+      // 电脑设备
+      document.body.style.backgroundImage = "url('https://img2.baidu.com/it/u=2423333236,1902471738&fm=253&fmt=auto&app=120&f=JPEG?w=1418&h=800')"; // 替换为您的电脑图片URL
+    }
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundRepeat = "no-repeat";
+  }
     </script>
 </body>
 </html>
