@@ -48,7 +48,7 @@ type SubscribeResponse struct {
 	} `json:"ext"`
 }
 
-func Qrsign(clientconn *websocket.Conn, courseID int, signID int) error {
+func Qrsign(clientconn *websocket.Conn, courseID int, signID int, onQR func(string)) error {
 	// WebSocket 服务器地址
 	serverURL := "wss://www.teachermate.com.cn/faye"
 
@@ -158,8 +158,13 @@ func Qrsign(clientconn *websocket.Conn, courseID int, signID int) error {
 			fmt.Println(err)
 		} else {
 			if submsg[0].ClientID == "" {
-				// ResponsMsg(clientconn, "二维码签到链接："+submsg[0].Data.QrUrl)
-				ResponseQR(clientconn, submsg[0].Data.QrUrl)
+				// 将二维码通知给 websocket 或回调
+				if clientconn != nil {
+					ResponseQR(clientconn, submsg[0].Data.QrUrl)
+				}
+				if onQR != nil {
+					onQR(submsg[0].Data.QrUrl)
+				}
 			} else {
 				if submsg[0].ClientID != "" {
 					stopflag += 1

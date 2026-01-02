@@ -12,5 +12,7 @@ email:
   port : 465
   userName : "joker.xueo717@foxmail.com"
   password : "ayrmnuxysgvmjcjj"
+map:
+  key: "W4HBZ-GARKZ-MR6XX-7VK4M-VECNF-A5FQG"  # 请替换为你自己的腾讯地图Key（已加入配置）
 
 

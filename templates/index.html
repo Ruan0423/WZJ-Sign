@@ -119,13 +119,27 @@
 <body onload="setBackgroundImage()">
     <h1>微助教自动签到</h1>
     
+    <div class="top-actions">
+        <a class="entry-btn" href="/dfyautosign">分易签到入口</a>
+        <a class="entry-btn" href="/xxtautosign">学习通签到入口</a>
+    </div>
+
     <form id="openidForm">
         <label for="openid">OpenID:</label>
         <input type="text" id="openid" name="openid" placeholder="请输入您的 OpenID" required>
+
+        <label for="address">地址（用于获取坐标）</label>
+        <input type="text" id="address" placeholder="输入地点名或地址，点击获取坐标">
+        <button type="button" id="getCoord">获取坐标</button>
+
         <!-- 新增经纬度输入 -->
         <input type="text" id="latlon" name="latlon" placeholder="若GPS签到需经纬度（格式30.59,114.37）" pattern="^-?\d+\.\d+,-?\d+\.\d+$">
         <input type="text" id="email" name="email" placeholder="请输入通知结果的邮箱（可选）" >
-        <button type="submit">提交</button>
+        <div class="form-actions">
+            <button type="submit">提交</button>
+            <button type="button" id="mountBtn">开始挂载（后台监听）</button>
+            <button type="button" id="stopMountBtn">停止挂载</button>
+        </div>
     </form>
     <div id="dataContainer"></div>
     <div id="helpContainer" style="color: rgb(0, 110, 255);" ></div>
@@ -301,6 +315,92 @@
                 alert('网络原因提交失败，请稍后重试。或者只提交你的openid（不含https://..),例如提交“openid=8adc79cf781c0a4"或者"8adc79cf781c0a4"');
             }
         }
+
+        // 获取坐标按钮
+        document.getElementById('getCoord').addEventListener('click', async function () {
+            const addr = document.getElementById('address').value.trim();
+            if (!addr) {
+                alert('请输入地址或地点名称');
+                return;
+            }
+            try {
+                const res = await fetch(`/map/geocode?address=${encodeURIComponent(addr)}`);
+                const data = await res.json();
+                if (data.error) {
+                    // 针对常见错误给出友好提示
+                    if (data.error.indexOf('参数错误') !== -1) {
+                        alert('获取坐标失败：参数错误，可能是地址无法识别或 Key 配置错误，请尝试更详细的地址或检查服务器上的 map key');
+                    } else {
+                        alert('获取坐标失败：' + data.error);
+                    }
+                    return;
+                }
+                document.getElementById('latlon').value = `${data.lat},${data.lon}`;
+                const info = document.createElement('div');
+                info.className = 'data-item';
+                info.textContent = `已获取：${data.address} (${data.lat},${data.lon})`;
+                dataContainer.appendChild(info);
+            } catch (e) {
+                alert('获取坐标失败，请检查网络或服务器日志');
+            }
+        });
+
+        // 挂载开始/停止
+        document.getElementById('mountBtn').addEventListener('click', async function () {
+            const openidVal = document.getElementById('openid').value.trim();
+            const emailVal = document.getElementById('email').value.trim();
+            const latlonVal = document.getElementById('latlon').value.trim();
+            if (!openidVal) { alert('请输入 OpenID'); return; }
+            try {
+                const res = await fetch('/wzjsign/mount/start', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ openid: openidVal, email: emailVal, latlon: latlonVal })
+                });
+                    const data = await res.json();
+                if (data.error) { alert('启动挂载失败：' + data.error); return; }
+                alert('挂载已启动');
+                const info = document.createElement('div'); info.className='data-item'; info.textContent = data.msg || '挂载已启动'; dataContainer.appendChild(info);
+                refreshMountList();
+            } catch (e) { alert('启动挂载失败'); }
+        });
+        document.getElementById('stopMountBtn').addEventListener('click', async function () {
+            const openidVal = document.getElementById('openid').value.trim();
+            if (!openidVal) { alert('请输入 OpenID'); return; }
+            try {
+                const res = await fetch('/wzjsign/mount/stop', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ openid: openidVal }) });
+                const data = await res.json();
+                if (data.error) { alert('停止挂载失败：' + data.error); return; }
+                alert('挂载已停止');
+                const info = document.createElement('div'); info.className='data-item'; info.textContent = data.msg || '挂载已停止'; dataContainer.appendChild(info);
+                refreshMountList();
+            } catch (e) { alert('停止挂载失败'); }
+        });
+
+        async function refreshMountList() {
+            try {
+                const res = await fetch('/wzjsign/mount/list');
+                const data = await res.json();
+                const mountedAreaId = 'mountedArea';
+                let area = document.getElementById(mountedAreaId);
+                if (!area) {
+                    area = document.createElement('div');
+                    area.id = mountedAreaId;
+                    area.style.marginTop = '10px';
+                    area.style.padding = '10px';
+                    area.style.background = '#fff';
+                    area.style.borderRadius = '6px';
+                    area.style.width = '90%';
+                    area.style.maxWidth = '500px';
+                    document.body.insertBefore(area, dataContainer);
+                }
+                area.innerHTML = '<strong>正在挂载的用户（隐私处理）</strong><br>' + (data.mounts && data.mounts.length ? data.mounts.join('<br>') : '暂无');
+            } catch (e) { console.warn('无法获取挂载列表'); }
+        }
+
+        // 周期刷新挂载列表
+        setInterval(refreshMountList, 15000);
+        refreshMountList();
+
         function setBackgroundImage() {
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
       // 手机设备

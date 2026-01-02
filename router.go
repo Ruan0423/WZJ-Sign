@@ -49,6 +49,14 @@ func addUserHandler(c *gin.Context) {
 			}
 		} else if action == "toggle_mode" {
 			Test = !Test
+		} else if action == "toggle_mount" {
+			name := c.PostForm("name")
+			if name != "" {
+				// 切换挂载权限
+				if _, err := ToggleMountAllow(name); err != nil {
+					fmt.Println("切换挂载权限出错：", err)
+				}
+			}
 		}
 		// 刷新用户列表
 		RefushUsers()
@@ -61,6 +69,7 @@ func addUserHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "adduser.html", gin.H{
 		"users": Allow_users,
 		"Test":  Test,
+		"MountAllowed": MountAllowed,
 	})
 }
 func indexHandler(c *gin.Context) {
@@ -85,6 +94,82 @@ func postHandler(c *gin.Context) {
 	// 返回 WebSocket URL
 	wsURL := "ws://" + c.Request.Host + "/wzjsign/ws?openid=" + openid + "&email=" + requestData.Email + "&latlon=" + requestData.Latlon
 	c.JSON(http.StatusOK, gin.H{"wsUrl": wsURL})
+}
+// 挂载启动
+func mountStartHandler(c *gin.Context) {
+	var req struct{
+		OpenID string `json:"openid"`
+		Email string `json:"email"`
+		Latlon string `json:"latlon"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.OpenID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error":"参数无效"})
+		return
+	}
+	openid := GetopenidFromUrl(req.OpenID)
+	if err := mountMgr.Start(openid, req.Email, req.Latlon); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"msg":"挂载已启动"})
+}
+
+// 停止挂载
+func mountStopHandler(c *gin.Context) {
+	var req struct{
+		OpenID string `json:"openid"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.OpenID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error":"参数无效"})
+		return
+	}
+	openid := GetopenidFromUrl(req.OpenID)
+	if err := mountMgr.Stop(openid); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"msg":"挂载已停止"})
+}
+
+// 挂载列表
+func mountListHandler(c *gin.Context) {
+	list := mountMgr.List()
+	c.JSON(http.StatusOK, gin.H{"mounts": list})
+}
+
+// 地图地址转坐标接口
+func geocodeHandler(c *gin.Context) {
+	address := c.Query("address")
+	if address == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error":"address 不能为空"})
+		return
+	}
+	lat, lon, formatted, err := Geocode(address)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"lat":lat, "lon":lon, "address":formatted})
+}
+
+// 管理接口：列出详细的挂载信息
+func mountActiveDetailsHandler(c *gin.Context) {
+	list := mountMgr.ActiveDetails()
+	c.JSON(http.StatusOK, gin.H{"mounts": list})
+}
+
+// 管理接口：强制停止挂载
+func mountForceStopHandler(c *gin.Context) {
+	var req struct{ OpenID string `json:"openid"` }
+	if err := c.ShouldBindJSON(&req); err != nil || req.OpenID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error":"参数无效"})
+		return
+	}
+	if err := mountMgr.Stop(req.OpenID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"msg":"已停止挂载"})
 }
 func wsHandlernew(c *gin.Context) {
 	//检查cilents里面是否有连接
@@ -234,7 +319,11 @@ func wsHandlernew(c *gin.Context) {
 					if err := SendEmail(settings.Conf.Email.UserName, fmt.Sprintf("%s %s 签到成功", name, studentinfo.CollegeName)); err != nil {
 						fmt.Println("发送邮件失败！", err)
 					}
-					if err := Qrsign(conn, Signing.CourseID, Signing.SignID); err != nil {
+					// 调用 Qrsign，将二维码通过 websocket 展示并通过邮件发送
+					if err := Qrsign(conn, Signing.CourseID, Signing.SignID, func(qr string) {
+						// 邮件通知二维码链接
+						SendEmail(email, fmt.Sprintf("%s", qr))
+					}); err != nil {
 						ResponsMsg(conn, err.Error())
 					}
 

@@ -39,7 +39,15 @@
     </form>
     <h2>Current Users ({{len .users}})</h2>
     <ul>
-        {{range .users}}<li>{{.}}</li>{{end}}
+        {{range .users}}
+        <li>
+            {{.}}
+            <form method="POST" style="display:inline-block;margin-left:10px;">
+                <input type="hidden" name="name" value="{{.}}" />
+                <button type="submit" name="action" value="toggle_mount">{{if index $.MountAllowed .}}取消挂载{{else}}允许挂载{{end}}</button>
+            </form>
+        </li>
+        {{end}}
     </ul>
 </body>
 </html>

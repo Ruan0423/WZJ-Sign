@@ -25,6 +25,12 @@ func main() {
 	//配置日志
 	initlogger()
 	RefushUsers()
+	// 加载挂载权限
+	LoadMountAllowed()
+	// 恢复之前持久化的挂载任务（如果有）
+	if err := mountMgr.Restore(); err != nil {
+		fmt.Println("恢复挂载任务出错：", err)
+	}
 	//开始
 	Start()
 
@@ -41,6 +47,20 @@ func Start() {
 	r.POST("/adduser",addUserHandler)
 	r.GET("/wzjsign/ws", wsHandlernew) // WebSocket 连接处理
 
+	// 挂载相关 API
+	r.POST("/wzjsign/mount/start", mountStartHandler)
+	r.POST("/wzjsign/mount/stop", mountStopHandler)
+	r.GET("/wzjsign/mount/list", mountListHandler)
+	// 管理接口
+	r.GET("/wzjsign/mount/active", mountActiveDetailsHandler)
+	r.POST("/wzjsign/mount/force_stop", mountForceStopHandler)
+
+	// 地图坐标查询
+	r.GET("/map/geocode", geocodeHandler)
+
+	// 入口占位（仅作为导航入口）
+	r.GET("/dfyautosign", func(c *gin.Context){ c.String(200, "分易签到入口（占位）") })
+	r.GET("/xxtautosign", func(c *gin.Context){ c.String(200, "学习通签到入口（占位）") })
 
 	r.Run(fmt.Sprintf(":%d", settings.Conf.APP.Port))
 
@@ -58,4 +78,6 @@ func RefushUsers(){
 				file.Close()
 			}
 			mu.Unlock()
+			// 刷新挂载权限列表
+			LoadMountAllowed()
 }
