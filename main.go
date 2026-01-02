@@ -12,6 +12,7 @@ import (
 
 var (
 	Allow_users []string
+	Mount_Allow_users []string
     Test = false
 	Mu sync.Mutex
 )
@@ -70,6 +71,8 @@ func RefushUsers(){
 			// 刷新用户列表
 			mu.Lock()
 			Allow_users = []string{} // 清空当前列表
+			Mount_Allow_users = []string{}
+
 			if file, err := os.Open("user.txt"); err == nil {
 				scanner := bufio.NewScanner(file)
 				for scanner.Scan() {
@@ -77,6 +80,15 @@ func RefushUsers(){
 				}
 				file.Close()
 			}
+			// 加载被允许挂载的用户
+			if file, err := os.Open("mount_allow.txt"); err == nil {
+				scanner := bufio.NewScanner(file)
+				for scanner.Scan() {
+					Mount_Allow_users = append(Mount_Allow_users, scanner.Text())
+				}
+				file.Close()
+			}
+			
 			mu.Unlock()
 			// 刷新挂载权限列表
 			LoadMountAllowed()

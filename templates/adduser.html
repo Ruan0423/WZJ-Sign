@@ -1,53 +1,139 @@
-<!-- templates/adduser.html -->
-<!-- <!DOCTYPE html>
-<html>
-<head>
-    <title>User Management</title>
-</head>
-<body>
-    <h1>User Management</h1>
-    
-    <form method="POST">
-        <input type="text" name="name" placeholder="Enter name">
-        <button type="submit" name="action" value="add">Add User</button>
-        <button type="submit" name="action" value="refresh">Refresh</button>
-    </form>
-    <h2>Current Users ({{len .users}})</h2>
-    <ul>
-        {{range .users}}<li>{{.}}</li>{{end}}
-    </ul>
-</body>
-</html> -->
-
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>User Management</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户权限管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 保持与主页一致的背景动画 */
+        .bg-gradient-animate {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* 自定义滚动条 */
+        .scroller::-webkit-scrollbar { width: 6px; }
+        .scroller::-webkit-scrollbar-track { background: #f1f1f1; }
+        .scroller::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
 </head>
-<body>
-    <h1>User Management</h1>
-    
-    <form method="POST">
-        <input type="text" name="name" placeholder="Enter name">
-        <button type="submit" name="action" value="add">Add User</button>
-        <button type="submit" name="action" value="delete">Delete User</button>
-        <button type="submit" name="action" value="refresh">Refresh</button>
-        <!-- 新增模式切换按钮 -->
-        <button type="submit" name="action" value="toggle_mode">
-            {{if .Test}}设置为权限模式{{else}}设置为测试模式{{end}}
-        </button>
-    </form>
-    <h2>Current Users ({{len .users}})</h2>
-    <ul>
-        {{range .users}}
-        <li>
-            {{.}}
-            <form method="POST" style="display:inline-block;margin-left:10px;">
-                <input type="hidden" name="name" value="{{.}}" />
-                <button type="submit" name="action" value="toggle_mount">{{if index $.MountAllowed .}}取消挂载{{else}}允许挂载{{end}}</button>
-            </form>
-        </li>
-        {{end}}
-    </ul>
+<body class="bg-gray-100 min-h-screen flex justify-center items-center font-sans bg-gradient-animate p-4">
+
+    <div class="w-full max-w-3xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-white drop-shadow-md mb-2">
+                <i class="fa-solid fa-users-gear mr-2"></i>用户管理控制台
+            </h1>
+            <p class="text-white/80 text-sm">服务端直接渲染模式</p>
+        </div>
+
+        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden">
+            
+            <div class="p-6 border-b border-gray-100 bg-gray-50/50">
+                <form method="POST" class="space-y-4">
+                    
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <div class="relative flex-grow">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                <i class="fa-solid fa-user"></i>
+                            </span>
+                            <input type="text" name="name" placeholder="请输入用户名" 
+                                class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white shadow-sm">
+                        </div>
+                        <button type="submit" name="action" value="add" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-plus"></i> 添加
+                        </button>
+                        <button type="submit" name="action" value="delete" 
+                            class="bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-6 rounded-lg shadow transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-trash"></i> 删除
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-4 pt-2">
+                        <div class="flex gap-2">
+                            <button type="submit" name="action" value="refresh" 
+                                class="text-gray-600 hover:text-blue-600 bg-white hover:bg-blue-50 border border-gray-200 font-medium py-2 px-4 rounded-lg transition text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-rotate-right"></i> 刷新列表
+                            </button>
+                        </div>
+
+                        <button type="submit" name="action" value="toggle_mode" 
+                            class="relative inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 
+                            {{if .Test}} bg-orange-500 hover:bg-orange-600 focus:ring-orange-500 {{else}} bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 {{end}}">
+                            <i class="fa-solid fa-toggle-on mr-2"></i>
+                            {{if .Test}}
+                                当前：测试模式 (点击切换)
+                            {{else}}
+                                当前：权限模式 (点击切换)
+                            {{end}}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white">
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h2 class="text-lg font-bold text-gray-700">
+                        <i class="fa-solid fa-list-ul mr-2 text-blue-500"></i>用户列表
+                    </h2>
+                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                        共 {{len .users}} 人
+                    </span>
+                </div>
+
+                <div class="overflow-y-auto max-h-[500px] scroller">
+                    {{if not .users}}
+                        <div class="p-8 text-center text-gray-400">
+                            <i class="fa-solid fa-inbox text-4xl mb-3 block"></i>
+                            暂无用户数据
+                        </div>
+                    {{else}}
+                        <ul class="divide-y divide-gray-100">
+                            {{range .users}}
+                            <li class="px-6 py-4 hover:bg-gray-50 transition flex items-center justify-between group">
+                                <div class="flex items-center">
+                                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                                        {{/* 简单的取首字母逻辑，这里直接用图标代替 */}}
+                                        <i class="fa-solid fa-user"></i>
+                                    </div>
+                                    <span class="ml-4 text-gray-700 font-medium text-base select-all">{{.}}</span>
+                                </div>
+
+                                <form method="POST" class="inline-block">
+                                    <input type="hidden" name="name" value="{{.}}" />
+                                    {{if index $.MountAllowed .}}
+                                        <button type="submit" name="action" value="toggle_mount" 
+                                            class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1">
+                                            <i class="fa-solid fa-ban"></i> 取消挂载
+                                        </button>
+                                    {{else}}
+                                        <button type="submit" name="action" value="toggle_mount" 
+                                            class="bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1">
+                                            <i class="fa-regular fa-circle-check"></i> 允许挂载
+                                        </button>
+                                    {{end}}
+                                </form>
+                            </li>
+                            {{end}}
+                        </ul>
+                    {{end}}
+                </div>
+            </div>
+
+            <div class="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-500 flex justify-between items-center">
+                <span>系统状态: {{if .Test}} <span class="text-orange-500 font-bold">调试中</span> {{else}} <span class="text-green-600 font-bold">运行中</span> {{end}}</span>
+                <span>Rendered by Go Template</span>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

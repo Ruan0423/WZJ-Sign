@@ -102,6 +102,8 @@ func mountStartHandler(c *gin.Context) {
 		Email string `json:"email"`
 		Latlon string `json:"latlon"`
 	}
+
+	
 	if err := c.ShouldBindJSON(&req); err != nil || req.OpenID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error":"参数无效"})
 		return
