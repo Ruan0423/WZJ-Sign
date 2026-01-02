@@ -3,415 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>微助教签到</title>
+    <title>微助教自动签到助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f7fa;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+        /* 自定义滚动条样式 */
+        .scroller::-webkit-scrollbar { width: 6px; }
+        .scroller::-webkit-scrollbar-track { background: #f1f1f1; }
+        .scroller::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .scroller::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* 背景动画 */
+        .bg-gradient-animate {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
         }
-        h1 {
-            font-size: 2em;
-            color: rgb(17, 212, 43);
-            margin-bottom: 20px;
-        }
-        form {
-            opacity: 0.5;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        label {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        input[type="text"] {
-            width: 300px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 1em;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #4caf50;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #helpContainer {
-    padding: 20px; /* 内边距 */
-    text-align: center; /* 文本居中 */
-    font-size: 13px; /* 字体大小 */
-    color: #333; /* 字体颜色 */
-    max-width: 1200px; /* 最大宽度 */
-    margin: 0 auto; /* 水平居中 */
-
-    bottom: 0; /* 底部对齐 */
-    left: 0;
-    right: 0;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); /* 阴影效果 */
-}
-        #dataContainer {
-            opacity: 0.6;
-            margin-top: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            height: 300px;
-            width: 90%;
-            max-width: 500px;
-            overflow-y: auto;
-            background-color: #ffffff;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-        .data-item {
-            padding: 10px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee;
-            border-radius: 4px;
-            background-color: #f9f9f9;
-        }
-        .data-item:last-child {
-            border-bottom: none;
-        }
-        .qrcode {
-            display: block;
-            margin: 20px auto;
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        @media (max-width: 600px) {
-            form {
-                width: 100%;
-                box-sizing: border-box;
-            }
-            input[type="text"] {
-                width: 90%;
-            }
-            #dataContainer {
-                width: 100%;
-                height: 250px;
-            }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
     </style>
 </head>
-<body onload="setBackgroundImage()">
-    <h1>微助教自动签到</h1>
-    
-    <div class="top-actions">
-        <a class="entry-btn" href="/dfyautosign">分易签到入口</a>
-        <a class="entry-btn" href="/xxtautosign">学习通签到入口</a>
+<body class="bg-gray-100 min-h-screen flex justify-center items-center text-sm sm:text-base font-sans bg-gradient-animate">
+
+    <div id="app" class="w-full max-w-2xl px-4 py-8">
+        
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-white drop-shadow-md mb-2">
+                <i class="fa-solid fa-graduation-cap mr-2"></i>微助教助手
+            </h1>
+            <div class="flex justify-center gap-4 text-white/90">
+                <a href="/dfyautosign" class="hover:text-white hover:underline underline-offset-4 transition"><i class="fa-solid fa-link mr-1"></i>分易签到</a>
+                <span class="opacity-50">|</span>
+                <a href="/xxtautosign" class="hover:text-white hover:underline underline-offset-4 transition"><i class="fa-solid fa-link mr-1"></i>学习通签到</a>
+            </div>
+        </div>
+
+        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden">
+            
+            <div class="p-6 sm:p-8 space-y-5">
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1">OpenID <span class="text-red-500">*</span></label>
+                    <input type="text" v-model="form.openid" placeholder="粘贴链接或OpenID" 
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition bg-gray-50">
+                    <p class="text-xs text-gray-500 mt-1">有效期约3小时，请勿在复制后刷新微助教页面</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div class="sm:col-span-2">
+                        <label class="block text-gray-700 font-semibold mb-1">位置查询</label>
+                        <div class="flex">
+                            <input type="text" v-model="form.address" placeholder="输入教室/地点名称" 
+                                @keyup.enter="getCoordinate"
+                                class="w-full px-4 py-2 rounded-l-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none border-r-0">
+                            <button @click="getCoordinate" :disabled="loading.geo"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg font-medium transition disabled:opacity-50 whitespace-nowrap">
+                                <i class="fa-solid fa-location-dot" v-if="!loading.geo"></i>
+                                <span v-else>...</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-1">经纬度 (Lat,Lon)</label>
+                        <input type="text" v-model="form.latlon" placeholder="30.59,114.37" 
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1">通知邮箱 (可选)</label>
+                    <input type="email" v-model="form.email" placeholder="接收签到结果通知" 
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 outline-none focus:border-green-500 transition">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <button @click="connectWebSocket" :disabled="loading.ws"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transform active:scale-95 transition duration-200 flex items-center justify-center">
+                        <i class="fa-solid fa-play mr-2" v-if="!loading.ws"></i>
+                        <i class="fa-solid fa-circle-notch fa-spin mr-2" v-else></i>
+                        开始实时签到
+                    </button>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <button @click="handleMount('start')" :disabled="loading.mount"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow transition text-sm">
+                            <i class="fa-solid fa-robot mr-1"></i> 后台挂载
+                        </button>
+                        <button @click="handleMount('stop')" :disabled="loading.mount"
+                            class="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-xl shadow transition text-sm">
+                            <i class="fa-solid fa-stop mr-1"></i> 停止挂载
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-900 text-gray-200 border-t border-gray-800">
+                <div class="flex justify-between items-center px-4 py-2 bg-gray-800 text-xs text-gray-400">
+                    <span><i class="fa-solid fa-terminal mr-2"></i>运行日志</span>
+                    <span v-if="status.wsConnected" class="text-green-400"><i class="fa-solid fa-wifi mr-1"></i>已连接</span>
+                    <span v-else class="text-red-400"><i class="fa-solid fa-ban mr-1"></i>未连接</span>
+                </div>
+                
+                <div class="h-64 overflow-y-auto p-4 font-mono text-sm scroller" ref="logContainer">
+                    <div v-if="logs.length === 0" class="text-gray-600 text-center mt-10">
+                        暂无日志，请点击上方按钮开始
+                    </div>
+                    
+                    <div v-for="(log, index) in logs" :key="index" class="mb-3 animate-fade-in">
+                        <div v-if="log.type === 'text'" class="break-words">
+                            <span class="text-green-500 mr-2">[${ log.time }]</span>
+                            <span>${ log.content }</span>
+                        </div>
+                        
+                        <div v-if="log.type === 'qrcode'" class="bg-gray-800 p-4 rounded-lg mt-2 flex flex-col items-center">
+                            <p class="text-yellow-400 mb-2 font-bold">检测到二维码签到</p>
+                            <img :src="`data:image/png;base64,${log.data}`" class="w-48 h-48 rounded-lg bg-white p-2 mb-3">
+                            <a :href="log.qrUrl" target="_blank" class="text-blue-400 hover:text-blue-300 underline break-all text-center text-xs">
+                                ${ log.qrUrl }
+                            </a>
+                            <p v-if="!isWeChat" class="text-xs text-gray-500 mt-2">非微信环境，请截图扫码或点击链接</p>
+                        </div>
+
+                        <div v-if="log.type === 'error'" class="text-red-400">
+                            <span class="mr-2">[${ log.time }]</span>
+                            <i class="fa-solid fa-circle-exclamation mr-1"></i> ${ log.content }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 p-4 text-xs text-blue-800 border-t border-blue-100">
+                <div class="font-bold mb-1 flex items-center">
+                    <i class="fa-solid fa-server mr-2"></i>后台监控列表 (${ mountList.length })
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <span v-for="user in mountList" :key="user" class="bg-white px-2 py-1 rounded border border-blue-200 shadow-sm">
+                        ${ user }
+                    </span>
+                    <span v-if="mountList.length === 0" class="opacity-60">当前无挂载用户</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 text-xs text-gray-500 text-center leading-relaxed">
+                使用本工具产生的后果均自行承担，请勿过度依赖。<br>
+                @WeChat-Trv0802
+            </div>
+        </div>
+
+        <div class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 space-y-2 w-full max-w-xs pointer-events-none">
+            <transition-group name="toast">
+                <div v-for="toast in toasts" :key="toast.id" 
+                    :class="{'bg-green-500': toast.type==='success', 'bg-red-500': toast.type==='error', 'bg-blue-500': toast.type==='info'}"
+                    class="text-white px-4 py-3 rounded-lg shadow-lg text-center text-sm font-medium pointer-events-auto">
+                    ${ toast.message }
+                </div>
+            </transition-group>
+        </div>
+
     </div>
 
-    <form id="openidForm">
-        <label for="openid">OpenID:</label>
-        <input type="text" id="openid" name="openid" placeholder="请输入您的 OpenID" required>
-
-        <label for="address">地址（用于获取坐标）</label>
-        <input type="text" id="address" placeholder="输入地点名或地址，点击获取坐标">
-        <button type="button" id="getCoord">获取坐标</button>
-
-        <!-- 新增经纬度输入 -->
-        <input type="text" id="latlon" name="latlon" placeholder="若GPS签到需经纬度（格式30.59,114.37）" pattern="^-?\d+\.\d+,-?\d+\.\d+$">
-        <input type="text" id="email" name="email" placeholder="请输入通知结果的邮箱（可选）" >
-        <div class="form-actions">
-            <button type="submit">提交</button>
-            <button type="button" id="mountBtn">开始挂载（后台监听）</button>
-            <button type="button" id="stopMountBtn">停止挂载</button>
-        </div>
-    </form>
-    <div id="dataContainer"></div>
-    <div id="helpContainer" style="color: rgb(0, 110, 255);" ></div>
-
     <script>
-        let ws;
-        let openid;
-        let email;
-        const messages = []; // 存储消息列表
+        const { createApp, ref, reactive, onMounted, nextTick } = Vue;
 
-        document.getElementById('openidForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            openid = document.getElementById('openid').value.trim();
-            email = document.getElementById('email').value.trim();
-            latlon = document.getElementById('latlon').value.trim();
-
-            if (!openid) {
-                alert('请输入有效的 OpenID');
-                return;
-            }
-            if (latlon) {
-                            // 验证经纬度格式
-            if (!/^-?\d+\.\d+,-?\d+\.\d+$/.test(latlon)) {
-                alert('经纬度格式不正确，请使用类似30.50949,114.347的格式,中间的逗号是英文逗号');
-                return;
-            }
-
-            }
-
-            connectWebSocket();
-        });
-        const dataContainer = document.getElementById('dataContainer');
-        const helpContainer = document.getElementById('helpContainer');
-        helpContainer.innerHTML="经纬度为GPS的坐标，进入https://lbs.qq.com/getPoint/，左上角搜索教室的地点，然后右边复制查询到的坐标.<br>openid为微助教的主页链接,复制的链接中包含openid就行。<br>例如：https://v18.teachermate.cn/wechat-pro-ssr/?openid=8adc79cf781c0a40e3ee2b447e090d97&from=wzj或者<br>openid=8adc79cf781c0a40e3ee2b447e090d97或者8adc79cf781c0a40e3ee2b447e090d97<br>注意：1.每次进入微助教的任何页面都会刷新openid,之前的就会失效。所以复制好openid后不要再进入微助教任何页面。一个openid的有效期为至少3小时。<br>2.如果是定位签到或者普通签到，随便在任何浏览器打开链接输入openid即可。<br>3.如果是二维码签到，推荐使用微信打开网站进行全自动签到。<br>4.若遇到卡顿请重新点提交.<br>5.使用该方法产生的后果均自行承担，有一定概率失效，请勿要百分百依赖";
-        dataContainer.innerHTML = helpContainer.innerHTML;
-        helpContainer.innerHTML = "@WeChat-Trv0802"
-        async function fetchData(url) {
-            const dataContainer = document.getElementById("dataContainer");
-
-            try {
-                const response = await fetch(url, {
-                    mode: 'no-cors' // 设置 no-cors 模式
+        const app = createApp({
+            setup() {
+                // --- 状态管理 ---
+                const form = reactive({
+                    openid: '',
+                    address: '',
+                    latlon: '',
+                    email: ''
                 });
 
-                if (response.ok) {
-                    // 注意：在 no-cors 模式下，response.ok 只能确认是否请求成功，无法读取具体数据
-                    const successMessage = document.createElement("p");
-                    successMessage.textContent = "请求成功！但无法读取具体响应内容。";
-                    dataContainer.appendChild(successMessage);
-                } else {
-                    const errorMessage = document.createElement("p");
-                    errorMessage.textContent = `请求失败，状态码：${response.status}`;
-                    dataContainer.appendChild(errorMessage);
-                }
-            } catch (error) {
-                console.error("请求失败:", error);
-                const errorMessage = document.createElement("p");
-                errorMessage.textContent = "请求失败，请检查网络或URL是否正确。";
-                dataContainer.appendChild(errorMessage);
-            }
-        }
-        async function connectWebSocket() {
-            try {
-                const response = await fetch('/wzjsign', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ openid ,email,latlon}),
-                });
+                const logs = ref([]);
+                const toasts = ref([]);
+                const mountList = ref([]);
+                const loading = reactive({ geo: false, ws: false, mount: false });
+                const status = reactive({ wsConnected: false });
+                let ws = null;
+                
+                const isWeChat = /micromessenger/i.test(navigator.userAgent);
+                const logContainer = ref(null);
 
-                if (!response.ok) {
-                    throw new Error('提交失败，请检查服务器日志。');
-                }
-
-                const { wsUrl } = await response.json();
-                ws = new WebSocket(wsUrl);
-
-                ws.onopen = function() {
-                    console.log('WebSocket 连接已打开');
-                    const dataContainer = document.getElementById('dataContainer');
-                    dataContainer.innerHTML = ''; 
-                    const info = document.createElement('div');
-                    info.textContent = '与服务器后端连接已建立，开始验证openid并获取个人信息中....';
-                    dataContainer.appendChild(info);
+                // --- 辅助函数 ---
+                
+                const addLog = (content, type = 'text', extra = {}) => {
+                    const time = new Date().toLocaleTimeString();
+                    logs.value.push({ time, content, type, ...extra });
+                    if (logs.value.length > 50) logs.value.shift();
+                    nextTick(() => {
+                        if (logContainer.value) {
+                            logContainer.value.scrollTop = logContainer.value.scrollHeight;
+                        }
+                    });
                 };
 
-                ws.onmessage = function(event) {
-                    const dataContainer = document.getElementById('dataContainer');
+                const showToast = (message, type = 'info') => {
+                    const id = Date.now();
+                    toasts.value.push({ id, message, type });
+                    setTimeout(() => {
+                        toasts.value = toasts.value.filter(t => t.id !== id);
+                    }, 3000);
+                };
+
+                // --- 核心业务逻辑 ---
+
+                const getCoordinate = async () => {
+                    if (!form.address) return showToast('请输入地址名称', 'error');
+                    
+                    loading.geo = true;
                     try {
-                        const message = JSON.parse(event.data);
-                        if (message.type === 'qrcode' && message.data) {
-                            //创建url链接
-                            const link = document.createElement('a');
-                            link.className = 'link-item';
-                            link.href = message.qrUrl;
-                            link.textContent = `点击签到: ${message.qrUrl}`;
-                            link.target = '_blank'; // 新标签页打开
-                            dataContainer.appendChild(link);
+                        const res = await fetch(`/map/geocode?address=${encodeURIComponent(form.address)}`);
+                        const data = await res.json();
+                        
+                        if (data.error) throw new Error(data.error);
+                        
+                        form.latlon = `${data.lat},${data.lon}`;
+                        addLog(`已获取坐标：${data.address} (${form.latlon})`);
+                        showToast('坐标获取成功', 'success');
+                    } catch (e) {
+                        showToast('获取失败：' + e.message, 'error');
+                        addLog('坐标获取失败：' + e.message, 'error');
+                    } finally {
+                        loading.geo = false;
+                    }
+                };
 
-                            const img = document.createElement('img');
-                            img.className = 'qrcode';
-                            img.src = `data:image/png;base64,${message.data}`;
-                            dataContainer.appendChild(img);
-                            // 自动重定向到 qrUrl
-                            const isWeChatBrowser = /micromessenger/i.test(navigator.userAgent);
+                const connectWebSocket = async () => {
+                    if (!form.openid) return showToast('请先输入 OpenID', 'error');
+                    if (form.latlon && !/^-?\d+\.\d+,-?\d+\.\d+$/.test(form.latlon)) {
+                        return showToast('经纬度格式错误 (例如: 30.59,114.37)', 'error');
+                    }
 
-                            if (isWeChatBrowser) {
-                                // 如果是微信浏览器，进行自动重定向
-                                window.location.href = message.qrUrl;
-                            } else {
-                                const info = document.createElement('div');
-                                info.textContent = '不是微信打开的网站，请手动扫码签到。若需要二维码签到也自动，请微信内打开。';
-                                dataContainer.appendChild(info);
-                            }
+                    loading.ws = true;
+                    addLog('正在请求服务器建立连接...');
 
-                        } else {
-                            const newData = message.text || event.data;
-
-                            messages.push(newData);
-                            if (messages.length > 20) {
-                                messages.shift(); 
-                            }
-
-                            dataContainer.innerHTML = '';
-                            messages.forEach((msg) => {
-                                const msgDiv = document.createElement('div');
-                                msgDiv.className = 'data-item';
-                                msgDiv.textContent = msg;
-                                dataContainer.appendChild(msgDiv);
-                            });
-                        }
-                    } catch (err) {
-                        console.warn('无法解析消息:', event.data);
-                        const newData = event.data;
-
-                        messages.push(newData);
-                        if (messages.length > 20) {
-                            messages.shift(); 
-                        }
-
-                        dataContainer.innerHTML = '';
-                        messages.forEach((msg) => {
-                            const msgDiv = document.createElement('div');
-                            msgDiv.className = 'data-item';
-                            msgDiv.textContent = msg;
-                            dataContainer.appendChild(msgDiv);
+                    try {
+                        const res = await fetch('/wzjsign', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(form)
                         });
-                    }
 
-                    dataContainer.scrollTop = dataContainer.scrollHeight;
+                        if (!res.ok) throw new Error('服务器响应异常');
+                        const data = await res.json();
+                        
+                        if (ws) ws.close();
+                        ws = new WebSocket(data.wsUrl);
+
+                        ws.onopen = () => {
+                            status.wsConnected = true;
+                            addLog('连接建立成功，正在验证 OpenID...', 'success');
+                            loading.ws = false;
+                        };
+
+                        ws.onmessage = (event) => {
+                            try {
+                                const msg = JSON.parse(event.data);
+                                if (msg.type === 'qrcode' && msg.data) {
+                                    addLog('收到二维码', 'qrcode', { data: msg.data, qrUrl: msg.qrUrl });
+                                    if (isWeChat) {
+                                        window.location.href = msg.qrUrl; 
+                                    }
+                                } else {
+                                    addLog(msg.text || event.data);
+                                }
+                            } catch (e) {
+                                addLog(event.data); 
+                            }
+                        };
+
+                        ws.onclose = () => {
+                            status.wsConnected = false;
+                            addLog('连接已断开', 'error');
+                        };
+
+                        ws.onerror = (err) => {
+                            addLog('WebSocket 连接发生错误', 'error');
+                            console.error(err);
+                        };
+
+                    } catch (e) {
+                        loading.ws = false;
+                        showToast('连接失败，请检查网络或 OpenID', 'error');
+                        addLog('连接初始化失败: ' + e.message, 'error');
+                    }
                 };
 
-                ws.onclose = function() {
-                    console.log('WebSocket 连接已关闭');
-                    const dataContainer = document.getElementById('dataContainer');
-                    const info = document.createElement('div');
-                    info.textContent = '连接已关闭,若不是openid失效请重新提交';
-                    dataContainer.appendChild(info);
+                const handleMount = async (action) => {
+                    if (!form.openid) return showToast('请输入 OpenID', 'error');
+                    
+                    loading.mount = true;
+                    const url = action === 'start' ? '/wzjsign/mount/start' : '/wzjsign/mount/stop';
+                    const payload = action === 'start' ? form : { openid: form.openid };
 
-                    if (openid) {
-                        // setTimeout(connectWebSocket, 20000);
+                    try {
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await res.json();
+                        
+                        if (data.error) throw new Error(data.error);
+                        
+                        showToast(action === 'start' ? '后台挂载已启动' : '后台挂载已停止', 'success');
+                        addLog(`系统消息: ${data.msg || (action === 'start' ? '挂载成功' : '停止成功')}`);
+                        refreshMountList(); 
+                    } catch (e) {
+                        showToast('操作失败: ' + e.message, 'error');
+                    } finally {
+                        loading.mount = false;
                     }
                 };
 
-                ws.onerror = function(error) {
-                    console.error('WebSocket 错误:', error);
-                    alert('你的网络不稳定，请重新提交。');
+                const refreshMountList = async () => {
+                    try {
+                        const res = await fetch('/wzjsign/mount/list');
+                        const data = await res.json();
+                        if (data.mounts) {
+                            mountList.value = data.mounts;
+                        }
+                    } catch (e) {
+                        console.warn('获取挂载列表失败', e);
+                    }
                 };
 
-            } catch (err) {
-                console.error(err);
-                alert('网络原因提交失败，请稍后重试。或者只提交你的openid（不含https://..),例如提交“openid=8adc79cf781c0a4"或者"8adc79cf781c0a4"');
-            }
-        }
-
-        // 获取坐标按钮
-        document.getElementById('getCoord').addEventListener('click', async function () {
-            const addr = document.getElementById('address').value.trim();
-            if (!addr) {
-                alert('请输入地址或地点名称');
-                return;
-            }
-            try {
-                const res = await fetch(`/map/geocode?address=${encodeURIComponent(addr)}`);
-                const data = await res.json();
-                if (data.error) {
-                    // 针对常见错误给出友好提示
-                    if (data.error.indexOf('参数错误') !== -1) {
-                        alert('获取坐标失败：参数错误，可能是地址无法识别或 Key 配置错误，请尝试更详细的地址或检查服务器上的 map key');
-                    } else {
-                        alert('获取坐标失败：' + data.error);
-                    }
-                    return;
-                }
-                document.getElementById('latlon').value = `${data.lat},${data.lon}`;
-                const info = document.createElement('div');
-                info.className = 'data-item';
-                info.textContent = `已获取：${data.address} (${data.lat},${data.lon})`;
-                dataContainer.appendChild(info);
-            } catch (e) {
-                alert('获取坐标失败，请检查网络或服务器日志');
-            }
-        });
-
-        // 挂载开始/停止
-        document.getElementById('mountBtn').addEventListener('click', async function () {
-            const openidVal = document.getElementById('openid').value.trim();
-            const emailVal = document.getElementById('email').value.trim();
-            const latlonVal = document.getElementById('latlon').value.trim();
-            if (!openidVal) { alert('请输入 OpenID'); return; }
-            try {
-                const res = await fetch('/wzjsign/mount/start', {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ openid: openidVal, email: emailVal, latlon: latlonVal })
+                onMounted(() => {
+                    refreshMountList();
+                    setInterval(refreshMountList, 15000);
                 });
-                    const data = await res.json();
-                if (data.error) { alert('启动挂载失败：' + data.error); return; }
-                alert('挂载已启动');
-                const info = document.createElement('div'); info.className='data-item'; info.textContent = data.msg || '挂载已启动'; dataContainer.appendChild(info);
-                refreshMountList();
-            } catch (e) { alert('启动挂载失败'); }
-        });
-        document.getElementById('stopMountBtn').addEventListener('click', async function () {
-            const openidVal = document.getElementById('openid').value.trim();
-            if (!openidVal) { alert('请输入 OpenID'); return; }
-            try {
-                const res = await fetch('/wzjsign/mount/stop', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ openid: openidVal }) });
-                const data = await res.json();
-                if (data.error) { alert('停止挂载失败：' + data.error); return; }
-                alert('挂载已停止');
-                const info = document.createElement('div'); info.className='data-item'; info.textContent = data.msg || '挂载已停止'; dataContainer.appendChild(info);
-                refreshMountList();
-            } catch (e) { alert('停止挂载失败'); }
+
+                return {
+                    form,
+                    logs,
+                    toasts,
+                    mountList,
+                    loading,
+                    status,
+                    isWeChat,
+                    logContainer,
+                    getCoordinate,
+                    connectWebSocket,
+                    handleMount
+                };
+            }
         });
 
-        async function refreshMountList() {
-            try {
-                const res = await fetch('/wzjsign/mount/list');
-                const data = await res.json();
-                const mountedAreaId = 'mountedArea';
-                let area = document.getElementById(mountedAreaId);
-                if (!area) {
-                    area = document.createElement('div');
-                    area.id = mountedAreaId;
-                    area.style.marginTop = '10px';
-                    area.style.padding = '10px';
-                    area.style.background = '#fff';
-                    area.style.borderRadius = '6px';
-                    area.style.width = '90%';
-                    area.style.maxWidth = '500px';
-                    document.body.insertBefore(area, dataContainer);
-                }
-                area.innerHTML = '<strong>正在挂载的用户（隐私处理）</strong><br>' + (data.mounts && data.mounts.length ? data.mounts.join('<br>') : '暂无');
-            } catch (e) { console.warn('无法获取挂载列表'); }
-        }
-
-        // 周期刷新挂载列表
-        setInterval(refreshMountList, 15000);
-        refreshMountList();
-
-        function setBackgroundImage() {
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      // 手机设备
-      document.body.style.backgroundImage = "url('https://img2.baidu.com/it/u=3117152704,1079598557&fm=253&fmt=auto&app=138&f=JPEG?w=800&h=1422')"; // 替换为您的手机图片URL
-    } else {
-      // 电脑设备
-      document.body.style.backgroundImage = "url('https://img2.baidu.com/it/u=2423333236,1902471738&fm=253&fmt=auto&app=120&f=JPEG?w=1418&h=800')"; // 替换为您的电脑图片URL
-    }
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundRepeat = "no-repeat";
-  }
+        // --- 关键修改：更改 Vue 的界定符，防止与 Go 模板冲突 ---
+        app.config.compilerOptions.delimiters = ['${', '}'];
+        app.mount('#app');
     </script>
+
+    <style>
+        .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
+        .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-20px); }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </body>
 </html>
