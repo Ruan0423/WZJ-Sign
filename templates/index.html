@@ -24,6 +24,9 @@
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        /* 模态框动画 */
+        .modal-enter-active, .modal-leave-active { transition: all 0.3s ease; }
+        .modal-enter-from, .modal-leave-to { opacity: 0; transform: scale(0.95); }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex justify-center items-center text-sm sm:text-base font-sans bg-gradient-animate">
@@ -31,25 +34,33 @@
     <div id="app" class="w-full max-w-2xl px-4 py-8">
         
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-white drop-shadow-md mb-2">
+            <h1 class="text-3xl font-bold text-white drop-shadow-md mb-3">
                 <i class="fa-solid fa-graduation-cap mr-2"></i>微助教助手
             </h1>
-            <div class="flex justify-center gap-4 text-white/90">
-                <a href="/dfyautosign" class="hover:text-white hover:underline underline-offset-4 transition"><i class="fa-solid fa-link mr-1"></i>分易签到</a>
-                <span class="opacity-50">|</span>
-                <a href="/xxtautosign" class="hover:text-white hover:underline underline-offset-4 transition"><i class="fa-solid fa-link mr-1"></i>学习通签到</a>
+            <div class="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-white/90 text-sm">
+                <a href="/dfyautosign" class="hover:text-white hover:underline underline-offset-4 transition flex items-center">
+                    <i class="fa-solid fa-link mr-1"></i>对分易签到
+                </a>
+                <span class="opacity-50 hidden sm:inline">|</span>
+                <a href="/xxtautosign" class="hover:text-white hover:underline underline-offset-4 transition flex items-center">
+                    <i class="fa-solid fa-link mr-1"></i>学习通签到
+                </a>
+                <span class="opacity-50 hidden sm:inline">|</span>
+                <button @click="showTutorial = true" class="hover:text-white hover:underline underline-offset-4 transition flex items-center">
+                    <i class="fa-solid fa-circle-question mr-1"></i>使用教程
+                </button>
             </div>
         </div>
 
-        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden">
+        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden relative">
             
             <div class="p-6 sm:p-8 space-y-5">
                 
                 <div>
                     <label class="block text-gray-700 font-semibold mb-1">OpenID <span class="text-red-500">*</span></label>
                     <input type="text" v-model="form.openid" placeholder="粘贴链接或OpenID" 
-                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition bg-gray-50">
-                    <p class="text-xs text-gray-500 mt-1">有效期约3小时，请勿在复制后刷新微助教页面</p>
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition bg-gray-50 text-gray-800">
+                    <p class="text-xs text-gray-500 mt-1 font-medium">有效期约3小时，请勿在复制后刷新微助教页面</p>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -58,7 +69,7 @@
                         <div class="flex">
                             <input type="text" v-model="form.address" placeholder="输入教室/地点名称" 
                                 @keyup.enter="getCoordinate"
-                                class="w-full px-4 py-2 rounded-l-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none border-r-0">
+                                class="w-full px-4 py-2 rounded-l-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none border-r-0 text-gray-800">
                             <button @click="getCoordinate" :disabled="loading.geo"
                                 class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg font-medium transition disabled:opacity-50 whitespace-nowrap">
                                 <i class="fa-solid fa-location-dot" v-if="!loading.geo"></i>
@@ -69,14 +80,14 @@
                     <div>
                         <label class="block text-gray-700 font-semibold mb-1">经纬度 (Lat,Lon)</label>
                         <input type="text" v-model="form.latlon" placeholder="30.59,114.37" 
-                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 text-gray-800">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-gray-700 font-semibold mb-1">通知邮箱 (可选)</label>
                     <input type="email" v-model="form.email" placeholder="接收签到结果通知" 
-                        class="w-full px-4 py-2 rounded-lg border border-gray-300 outline-none focus:border-green-500 transition">
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 outline-none focus:border-green-500 transition text-gray-800">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
@@ -140,10 +151,10 @@
                     <i class="fa-solid fa-server mr-2"></i>后台监控列表 (${ mountList.length })
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <span v-for="user in mountList" :key="user" class="bg-white px-2 py-1 rounded border border-blue-200 shadow-sm">
+                    <span v-for="user in mountList" :key="user" class="bg-white px-2 py-1 rounded border border-blue-200 shadow-sm text-gray-800">
                         ${ user }
                     </span>
-                    <span v-if="mountList.length === 0" class="opacity-60">当前无挂载用户</span>
+                    <span v-if="mountList.length === 0" class="opacity-60 text-blue-400 font-medium">当前无挂载用户</span>
                 </div>
             </div>
 
@@ -152,6 +163,70 @@
                 @WeChat-Trv0802
             </div>
         </div>
+
+        <transition name="modal">
+            <div v-if="showTutorial" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showTutorial = false">
+                <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                    <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                        <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                            <i class="fa-solid fa-circle-info mr-2 text-blue-600"></i>使用教程
+                        </h3>
+                        <button @click="showTutorial = false" class="text-gray-400 hover:text-gray-600 transition">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="p-6 overflow-y-auto scroller space-y-6">
+                        <div class="space-y-4">
+                            <div class="flex gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">1</span>
+                                <p class="text-gray-700 text-sm sm:text-base leading-snug">从微助教中复制 <span class="font-bold text-blue-600 underline underline-offset-2">OpenID</span> 输入到输入框中。</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">2</span>
+                                <p class="text-gray-700 text-sm sm:text-base leading-snug">可直接输入教室 <span class="font-bold text-blue-600 underline underline-offset-2">经纬度坐标</span> 或者输入地点自动获取。</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">3</span>
+                                <p class="text-gray-700 text-sm sm:text-base leading-snug">输入签到状态结果通知 <span class="font-bold text-blue-600 underline underline-offset-2">邮箱</span>。</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">4</span>
+                                <p class="text-gray-700 text-sm sm:text-base leading-snug">点击 <span class="font-bold text-green-600">开始</span>，显示你的信息和监听中即可。</p>
+                            </div>
+                        </div>
+
+                        <hr class="border-gray-100">
+
+                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                            <h4 class="font-bold text-indigo-900 mb-2 flex items-center">
+                                <i class="fa-solid fa-robot mr-2"></i>挂载模式介绍
+                            </h4>
+                            <p class="text-xs sm:text-sm text-indigo-800 leading-relaxed mb-3">
+                                开启挂载模式之后可以 <span class="font-bold">直接关闭网站</span>，系统自动在后台帮你签到，无需停留在页面。
+                            </p>
+                            <p class="text-xs sm:text-sm text-indigo-800 leading-relaxed">
+                                系统会通过邮箱通知签到，OpenID 状态。
+                            </p>
+                        </div>
+
+                        <div class="bg-red-50 p-4 rounded-xl border border-red-100 flex gap-3">
+                            <i class="fa-solid fa-circle-exclamation text-red-600 mt-1"></i>
+                            <div class="text-xs sm:text-sm text-red-800">
+                                <p class="font-bold mb-1">注意！</p>
+                                <p>二维码签到 <span class="font-bold underline underline-offset-2">不建议</span> 使用挂载模式，二维码签到需要从微信中自动打开网站签到。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 border-t bg-gray-50 text-center">
+                        <button @click="showTutorial = false" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-2.5 rounded-xl font-medium transition shadow-lg active:scale-95">
+                            我知道了
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
 
         <div class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 space-y-2 w-full max-w-xs pointer-events-none">
             <transition-group name="toast">
@@ -171,6 +246,7 @@
         const app = createApp({
             setup() {
                 // --- 状态管理 ---
+                const showTutorial = ref(false); 
                 const form = reactive({
                     openid: '',
                     address: '',
@@ -189,7 +265,6 @@
                 const logContainer = ref(null);
 
                 // --- 辅助函数 ---
-                
                 const addLog = (content, type = 'text', extra = {}) => {
                     const time = new Date().toLocaleTimeString();
                     logs.value.push({ time, content, type, ...extra });
@@ -209,18 +284,14 @@
                     }, 3000);
                 };
 
-                // --- 核心业务逻辑 ---
-
+                // --- 业务逻辑 ---
                 const getCoordinate = async () => {
                     if (!form.address) return showToast('请输入地址名称', 'error');
-                    
                     loading.geo = true;
                     try {
                         const res = await fetch(`/map/geocode?address=${encodeURIComponent(form.address)}`);
                         const data = await res.json();
-                        
                         if (data.error) throw new Error(data.error);
-                        
                         form.latlon = `${data.lat},${data.lon}`;
                         addLog(`已获取坐标：${data.address} (${form.latlon})`);
                         showToast('坐标获取成功', 'success');
@@ -237,69 +308,50 @@
                     if (form.latlon && !/^-?\d+\.\d+,-?\d+\.\d+$/.test(form.latlon)) {
                         return showToast('经纬度格式错误 (例如: 30.59,114.37)', 'error');
                     }
-
                     loading.ws = true;
                     addLog('正在请求服务器建立连接...');
-
                     try {
                         const res = await fetch('/wzjsign', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(form)
                         });
-
                         if (!res.ok) throw new Error('服务器响应异常');
                         const data = await res.json();
-                        
                         if (ws) ws.close();
                         ws = new WebSocket(data.wsUrl);
-
                         ws.onopen = () => {
                             status.wsConnected = true;
                             addLog('连接建立成功，正在验证 OpenID...', 'success');
                             loading.ws = false;
                         };
-
                         ws.onmessage = (event) => {
                             try {
                                 const msg = JSON.parse(event.data);
                                 if (msg.type === 'qrcode' && msg.data) {
                                     addLog('收到二维码', 'qrcode', { data: msg.data, qrUrl: msg.qrUrl });
-                                    if (isWeChat) {
-                                        window.location.href = msg.qrUrl; 
-                                    }
+                                    if (isWeChat) window.location.href = msg.qrUrl; 
                                 } else {
                                     addLog(msg.text || event.data);
                                 }
-                            } catch (e) {
-                                addLog(event.data); 
-                            }
+                            } catch (e) { addLog(event.data); }
                         };
-
                         ws.onclose = () => {
                             status.wsConnected = false;
                             addLog('连接已断开', 'error');
                         };
-
-                        ws.onerror = (err) => {
-                            addLog('WebSocket 连接发生错误', 'error');
-                            console.error(err);
-                        };
-
                     } catch (e) {
                         loading.ws = false;
-                        showToast('连接失败，请检查网络或 OpenID', 'error');
+                        showToast('连接失败', 'error');
                         addLog('连接初始化失败: ' + e.message, 'error');
                     }
                 };
 
                 const handleMount = async (action) => {
                     if (!form.openid) return showToast('请输入 OpenID', 'error');
-                    
                     loading.mount = true;
                     const url = action === 'start' ? '/wzjsign/mount/start' : '/wzjsign/mount/stop';
                     const payload = action === 'start' ? form : { openid: form.openid };
-
                     try {
                         const res = await fetch(url, {
                             method: 'POST',
@@ -307,29 +359,21 @@
                             body: JSON.stringify(payload)
                         });
                         const data = await res.json();
-                        
                         if (data.error) throw new Error(data.error);
-                        
                         showToast(action === 'start' ? '后台挂载已启动' : '后台挂载已停止', 'success');
                         addLog(`系统消息: ${data.msg || (action === 'start' ? '挂载成功' : '停止成功')}`);
                         refreshMountList(); 
                     } catch (e) {
                         showToast('操作失败: ' + e.message, 'error');
-                    } finally {
-                        loading.mount = false;
-                    }
+                    } finally { loading.mount = false; }
                 };
 
                 const refreshMountList = async () => {
                     try {
                         const res = await fetch('/wzjsign/mount/list');
                         const data = await res.json();
-                        if (data.mounts) {
-                            mountList.value = data.mounts;
-                        }
-                    } catch (e) {
-                        console.warn('获取挂载列表失败', e);
-                    }
+                        if (data.mounts) mountList.value = data.mounts;
+                    } catch (e) { console.warn('获取挂载列表失败', e); }
                 };
 
                 onMounted(() => {
@@ -338,22 +382,12 @@
                 });
 
                 return {
-                    form,
-                    logs,
-                    toasts,
-                    mountList,
-                    loading,
-                    status,
-                    isWeChat,
-                    logContainer,
-                    getCoordinate,
-                    connectWebSocket,
-                    handleMount
+                    form, logs, toasts, mountList, loading, status, isWeChat,
+                    logContainer, showTutorial, getCoordinate, connectWebSocket, handleMount
                 };
             }
         });
 
-        // --- 关键修改：更改 Vue 的界定符，防止与 Go 模板冲突 ---
         app.config.compilerOptions.delimiters = ['${', '}'];
         app.mount('#app');
     </script>

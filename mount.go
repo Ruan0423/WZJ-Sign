@@ -93,7 +93,7 @@ func (m *MountManager) Start(openid, email, latlon string) error {
 	name := student.Name
 	// 检查是否在允许名单中
 	allow := false
-	for _, u := range Allow_users {
+	for _, u := range Mount_Allow_users {
 		if u == name {
 			allow = true
 			break
