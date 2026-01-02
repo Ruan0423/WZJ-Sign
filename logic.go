@@ -144,6 +144,21 @@ func SendEmail(to string, msg string) error {
 	return nil
 }
 
+// SendEmailAsync 异步发送邮件（不阻塞调用者），仅记录错误
+func SendEmailAsync(to string, msg string) {
+	go func() {
+		if err := SendEmail(to, msg); err != nil {
+			if settings.Conf != nil {
+				// 如果用户邮箱发送失败，发给管理员并在日志记录
+				logger.Println("SendEmailAsync 发送失败：", err, "to:", to)
+				_ = SendEmail(settings.Conf.Email.UserName, "异步发送邮件失败："+err.Error()+" to:"+to)
+			} else {
+				logger.Println("SendEmailAsync 发送失败：", err)
+			}
+		}
+	}()
+}
+
 // 获取所有课程的作业
 
 func GetHomeworks(openid string) (Homeworks , error) {

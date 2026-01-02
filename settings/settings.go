@@ -8,7 +8,12 @@ var Conf = new(APPconfig)
 type APPconfig struct {
 	*APP `mapstructure:"app"`
 	*Position `mapstructure:"position"`
-	*Email
+	*Email `mapstructure:"email"`
+	*MapConfig `mapstructure:"map"`
+}
+
+type MapConfig struct {
+	Key string `mapstructure:"key"`
 }
 
 type APP struct {
@@ -23,9 +28,9 @@ type Position struct {
 	Lon string `mapstructure:"lon"`
 }
 type Email struct {
-	Port int `mapstructure:"port`
+	Port int `mapstructure:"port"`
 	Host string `mapstructure:"host"`
-	UserName string `mapstructure:"username"`
+	UserName string `mapstructure:"userName"`
 	PassWord string `mapstructure:"password"`
 }
 
